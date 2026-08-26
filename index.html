@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Special Event Request</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@600;700;800&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500&family=Dancing+Script:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #16203A;
+    --slate: #1B2A4A;
+    --slate-light: #2E4270;
+    --amber: #E8963C;
+    --amber-deep: #C97418;
+    --paper: #F6F5F2;
+    --card: #FFFFFF;
+    --line: #DDDCD6;
+    --muted: #6B7178;
+    --danger: #B3392C;
+    --danger-bg: #FBEAE7;
+    --success: #2F7A5C;
+    --success-bg: #E9F3EE;
+    --notice-bg: #FFF3E2;
+    --radius: 10px;
+    --shadow: 0 1px 2px rgba(22,32,58,0.06), 0 8px 24px -12px rgba(22,32,58,0.15);
+  }
+
+  * { box-sizing: border-box; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 28px 28px;
+    background-position: -1px -1px;
+    color: var(--ink);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px 64px;
+  }
+
+  .masthead { width: 100%; max-width: 720px; margin-bottom: 20px; }
+  .masthead-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .masthead h1 {
+    font-family: 'Libre Franklin', sans-serif;
+    font-weight: 800;
+    font-size: clamp(22px, 4vw, 28px);
+    letter-spacing: -0.01em;
+    margin: 0;
+    color: var(--slate);
+  }
+  .case-id {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    color: var(--muted);
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 4px 9px;
+    white-space: nowrap;
+  }
+  .masthead p.sub { margin: 6px 0 0; color: var(--muted); font-size: 14.5px; }
+
+  .stepper { width: 100%; max-width: 720px; display: flex; gap: 4px; margin-bottom: 22px; }
+  .step-seg { flex: 1; height: 5px; border-radius: 3px; background: var(--line); position: relative; overflow: hidden; }
+  .step-seg.done { background: var(--slate); }
+  .step-seg.current { background: var(--line); }
+  .step-seg.current::after {
+    content: ''; position: absolute; inset: 0; background: var(--amber); width: 45%; border-radius: 3px;
+  }
+  .step-label-row {
+    width: 100%; max-width: 720px; display: flex; justify-content: space-between; margin-bottom: 24px;
+    font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--muted);
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+
+  .card {
+    width: 100%; max-width: 720px; background: var(--card); border: 1px solid var(--line);
+    border-radius: var(--radius); box-shadow: var(--shadow); padding: 32px clamp(20px, 5vw, 40px);
+    animation: rise 0.35s ease;
+  }
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  .eyebrow {
+    font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--amber-deep); margin: 0 0 6px;
+  }
+  h2.screen-title { font-family: 'Libre Franklin', sans-serif; font-weight: 700; font-size: 22px; margin: 0 0 6px; color: var(--slate); }
+  p.screen-desc { margin: 0 0 26px; color: var(--muted); font-size: 14.5px; line-height: 1.5; }
+
+  .field { margin-bottom: 20px; }
+  .field-row { display: flex; gap: 16px; }
+  .field-row .field { flex: 1; }
+  @media (max-width: 520px) { .field-row { flex-direction: column; gap: 0; } }
+
+  label { display: block; font-size: 13.5px; font-weight: 600; color: var(--slate); margin-bottom: 6px; }
+  label .req { color: var(--danger); margin-left: 2px; }
+  label .opt { color: var(--muted); font-weight: 500; margin-left: 4px; font-size: 12px; text-transform: none; }
+
+  input[type="text"], input[type="tel"], input[type="email"], input[type="date"],
+  input[type="number"], textarea, select {
+    width: 100%; font-family: 'Inter', sans-serif; font-size: 15px; padding: 11px 13px;
+    border: 1.5px solid var(--line); border-radius: 7px; background: var(--paper); color: var(--ink);
+    transition: border-color 0.15s;
+  }
+  input:focus, textarea:focus, select:focus { outline: none; border-color: var(--slate-light); background: var(--card); }
+  textarea { resize: vertical; min-height: 90px; font-family: inherit; }
+
+  .checkline {
+    display: flex; align-items: flex-start; gap: 11px; padding: 14px 16px;
+    border: 1.5px solid var(--line); border-radius: 8px; background: var(--paper); cursor: pointer;
+    margin-bottom: 10px; transition: border-color 0.15s, background 0.15s;
+  }
+  .checkline:hover { border-color: var(--slate-light); }
+  .checkline.checked { border-color: var(--slate); background: #EEF1F7; }
+  .checkline input { margin-top: 2px; width: 17px; height: 17px; accent-color: var(--slate); flex-shrink: 0; }
+  .checkline .ct-label { font-weight: 600; font-size: 14.5px; color: var(--ink); }
+  .checkline .ct-sub { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+
+  .conditional {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.25s ease;
+  }
+  .conditional.open { max-height: 1400px; }
+  .conditional-inner { padding-top: 14px; }
+
+  .btn-row { display: flex; justify-content: space-between; align-items: center; margin-top: 28px; gap: 12px; }
+  button {
+    font-family: 'Inter', sans-serif; font-weight: 600; font-size: 14.5px; padding: 12px 22px;
+    border-radius: 7px; border: none; cursor: pointer; transition: filter 0.15s, transform 0.1s;
+  }
+  button:active { transform: translateY(1px); }
+  .btn-primary { background: var(--slate); color: #fff; }
+  .btn-primary:hover { filter: brightness(1.12); }
+  .btn-primary:focus-visible, .btn-secondary:focus-visible, .btn-ghost:focus-visible {
+    outline: 3px solid var(--amber); outline-offset: 2px;
+  }
+  .btn-secondary { background: transparent; color: var(--slate); border: 1.5px solid var(--line); }
+  .btn-secondary:hover { border-color: var(--slate); }
+  .btn-ghost { background: transparent; color: var(--muted); font-weight: 500; }
+  .btn-submit { background: var(--amber-deep); color: #fff; }
+  .btn-submit:hover { filter: brightness(1.1); }
+  .btn-submit:disabled { background: var(--line); color: var(--muted); cursor: not-allowed; }
+  .btn-add {
+    width: 100%; background: transparent; border: 1.5px dashed var(--line); color: var(--slate);
+    padding: 13px; border-radius: 8px; font-weight: 600; font-size: 14px; margin-top: 4px;
+  }
+  .btn-add:hover { border-color: var(--slate); background: #EEF1F7; }
+
+  .home-icon {
+    width: 52px; height: 52px; border-radius: 12px; background: var(--slate);
+    display: flex; align-items: center; justify-content: center; margin-bottom: 18px;
+  }
+  .home-icon svg { width: 26px; height: 26px; }
+
+  .line-item-block {
+    border: 1.5px solid var(--line); border-radius: 8px; padding: 18px; margin-bottom: 14px; position: relative;
+  }
+  .line-item-block h4 {
+    margin: 0 0 14px; font-family: 'Libre Franklin', sans-serif; font-size: 14.5px; color: var(--slate);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .line-item-remove {
+    color: var(--danger); background: none; border: none; cursor: pointer; font-size: 12.5px;
+    font-weight: 600; padding: 2px 4px;
+  }
+  .line-item-remove:disabled { color: var(--muted); cursor: not-allowed; }
+
+  .equip-item {
+    display: flex; align-items: center; gap: 14px; padding: 14px 16px;
+    border: 1.5px solid var(--line); border-radius: 8px; margin-bottom: 10px; background: var(--paper);
+  }
+  .equip-item .equip-info { flex: 1; }
+  .equip-item .equip-name { font-weight: 600; font-size: 14.5px; color: var(--ink); }
+  .equip-item .equip-price { font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .equip-item .equip-qty { width: 92px; flex-shrink: 0; }
+  .equip-item .equip-qty label { font-size: 11.5px; margin-bottom: 4px; }
+  .equip-item .equip-qty input { padding: 9px 10px; text-align: center; }
+
+  .disclaimer-box {
+    background: var(--notice-bg); border: 1.5px solid var(--amber); border-radius: 8px;
+    padding: 16px 18px; margin-bottom: 24px; font-size: 13.5px; line-height: 1.6; color: var(--ink);
+  }
+  .disclaimer-box .dl-title {
+    font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--amber-deep); font-weight: 700; margin-bottom: 8px;
+  }
+
+  /* Equipment Rental Agreement — gate card shown on the review screen */
+  .agreement-gate {
+    background: var(--notice-bg); border: 1.5px solid var(--amber); border-radius: 8px;
+    padding: 18px 20px; margin-bottom: 24px;
+  }
+  .agreement-gate .dl-title {
+    font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--amber-deep); font-weight: 700; margin-bottom: 8px;
+  }
+  .agreement-gate p { margin: 0 0 14px; font-size: 13.5px; line-height: 1.55; color: var(--ink); }
+  .agreement-gate.accepted {
+    background: var(--success-bg); border-color: var(--success);
+  }
+  .agreement-gate.accepted .dl-title { color: var(--success); }
+  .agreement-gate .accepted-note {
+    font-size: 13px; color: var(--ink); display: flex; align-items: center; gap: 8px; margin: 0;
+  }
+  .agreement-gate .accepted-note .check {
+    width: 20px; height: 20px; border-radius: 50%; background: var(--success); color: #fff;
+    display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 12px;
+  }
+  .agreement-reopen {
+    background: none; border: none; color: var(--slate-light); font-weight: 600; font-size: 12.5px;
+    cursor: pointer; padding: 0; margin-top: 8px;
+  }
+
+  /* Signature lock overlay — shown over the signature block until the agreement is accepted */
+  .signature-lock-overlay {
+    position: absolute; inset: 0; background: rgba(246,245,242,0.88);
+    border: 1.5px dashed var(--line); border-radius: 8px;
+    display: flex; align-items: center; justify-content: center; text-align: center;
+    padding: 24px; font-size: 13.5px; color: var(--muted); font-weight: 600;
+  }
+
+  /* Agreement modal */
+  .agreement-modal {
+    display: none; position: fixed; inset: 0; background: rgba(22,32,58,0.55);
+    z-index: 100; align-items: center; justify-content: center; padding: 20px;
+  }
+  .agreement-modal.open { display: flex; }
+  .agreement-dialog {
+    width: 100%; max-width: 680px; max-height: 86vh; background: var(--card);
+    border-radius: var(--radius); box-shadow: var(--shadow); display: flex; flex-direction: column; overflow: hidden;
+  }
+  .agreement-header {
+    display: flex; align-items: center; justify-content: space-between; padding: 16px 20px;
+    border-bottom: 1px solid var(--line); flex-shrink: 0;
+  }
+  .agreement-header h3 { margin: 0; font-family: 'Libre Franklin', sans-serif; font-size: 17px; color: var(--slate); }
+  .agreement-version { margin: 3px 0 0; font-size: 11.5px; color: var(--muted); }
+  .agreement-close {
+    background: none; border: none; color: var(--muted); font-size: 16px; cursor: pointer; padding: 4px 8px;
+  }
+  .agreement-scroll { flex: 1; overflow-y: auto; padding: 18px; background: var(--paper); }
+  .agreement-pages canvas.agreement-page {
+    display: block; width: 100%; height: auto; margin: 0 auto 14px; box-shadow: var(--shadow); background: #fff;
+  }
+  .agreement-loading { text-align: center; color: var(--muted); font-size: 13.5px; padding: 40px 0; }
+  .agreement-agree-bar {
+    display: none; align-items: center; justify-content: space-between; gap: 14px;
+    padding: 14px 20px; border-top: 1.5px solid var(--line); background: var(--card); flex-shrink: 0;
+  }
+  .agreement-agree-bar.show { display: flex; }
+  .agreement-agree-bar span { font-size: 13px; color: var(--muted); }
+
+  .field-typeahead { position: relative; }
+  .typeahead-list {
+    position: absolute; left: 0; right: 0; top: 100%; z-index: 20;
+    background: var(--card); border: 1.5px solid var(--line); border-radius: 8px;
+    box-shadow: var(--shadow); margin-top: 4px; max-height: 240px; overflow-y: auto; display: none;
+  }
+  .typeahead-list.show { display: block; }
+  .typeahead-item { padding: 10px 13px; cursor: pointer; }
+  .typeahead-item:not(:last-child) { border-bottom: 1px solid var(--line); }
+  .typeahead-item:hover, .typeahead-item.active { background: #EEF1F7; }
+  .typeahead-item .ta-name { font-weight: 600; font-size: 14px; color: var(--ink); }
+  .typeahead-item .ta-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .typeahead-empty { padding: 10px 13px; font-size: 13px; color: var(--muted); }
+
+  .rv-section { margin-bottom: 22px; }
+  .rv-section h4 {
+    font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--amber-deep); border-bottom: 1px solid var(--line); padding-bottom: 6px; margin: 0 0 10px;
+  }
+  .rv-row { display: flex; justify-content: space-between; gap: 16px; padding: 5px 0; font-size: 14px; }
+  .rv-row .k { color: var(--muted); }
+  .rv-row .v { color: var(--ink); font-weight: 500; text-align: right; max-width: 60%; }
+  .rv-edit { font-size: 12px; color: var(--slate-light); background: none; border: none; cursor: pointer; padding: 0; font-weight: 600; }
+  .rv-product { border: 1px solid var(--line); border-radius: 7px; padding: 10px 12px; margin-bottom: 8px; }
+  .rv-product .rv-row { padding: 3px 0; }
+
+  .success-wrap { text-align: center; padding: 20px 0; }
+  .success-check {
+    width: 64px; height: 64px; border-radius: 50%; background: var(--success-bg); color: var(--success);
+    display: flex; align-items: center; justify-content: center; margin: 0 auto 18px;
+  }
+
+  .sig-tabs { display:flex; gap:8px; margin-bottom:12px; }
+  .sig-tab {
+    padding:8px 16px; border-radius:7px; border:1.5px solid var(--line);
+    background:var(--paper); font-weight:600; font-size:13.5px; cursor:pointer; color:var(--muted);
+    font-family:'Inter', sans-serif;
+  }
+  .sig-tab.active { background:var(--slate); color:#fff; border-color:var(--slate); }
+  .sig-canvas-wrap { position:relative; }
+  .sig-canvas {
+    width:100%; height:170px; display:block; border:1.5px solid var(--line); border-radius:8px; background:#fff;
+    touch-action:none; cursor:crosshair;
+  }
+  .sig-canvas-placeholder { position:absolute; left:16px; bottom:14px; color:var(--muted); font-size:13px; pointer-events:none; font-style:italic; }
+  .sig-actions { margin-top:10px; display:flex; justify-content:flex-end; }
+  .sig-typed-input {
+    width:100%; font-family:'Dancing Script', cursive; font-size:32px; padding:16px 14px 10px;
+    border:none; border-bottom:2px solid var(--slate); background:#fff; color:var(--ink); border-radius:6px 6px 0 0;
+  }
+  .sig-typed-input:focus { outline:none; border-color:var(--amber); }
+  .sig-timestamp-note { font-size:12px; color:var(--muted); margin-top:8px; }
+
+  .hp-field { position: absolute; left: -9999px; top: -9999px; opacity: 0; height: 0; overflow: hidden; }
+
+  .error-banner {
+    background: var(--danger-bg); color: var(--danger); border-radius: 7px; padding: 10px 14px;
+    font-size: 13.5px; margin-bottom: 16px; display: none;
+  }
+  .error-banner.show { display: block; }
+
+  .helper-note { font-size: 12.5px; color: var(--muted); margin-top: 6px; }
+
+  footer { margin-top: 28px; font-size: 12px; color: var(--muted); text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="masthead">
+  <div class="masthead-row">
+    <h1>Special Event Request</h1>
+    <span class="case-id" id="caseIdBadge">DRAFT · UNSAVED</span>
+  </div>
+  <p class="sub">Request equipment, beer, and non-alcoholic product for a special event. No login required.</p>
+</div>
+
+<div class="stepper" id="stepper"></div>
+<div class="step-label-row" id="stepLabelRow">
+  <span id="stepLabelLeft">Start</span>
+  <span id="stepLabelRight">Complete</span>
+</div>
+
+<div class="card">
+
+  <!-- HOME -->
+  <section class="screen active" data-screen="home">
+    <div class="home-icon">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M7 3V6M17 3V6M4 9H20M5 5H19C19.5523 5 20 5.44772 20 6V20C20 20.5523 19.5523 21 19 21H5C4.44772 21 4 20.5523 4 20V6C4 5.44772 4.44772 5 5 5Z" stroke="#F6F5F2" stroke-width="1.6" stroke-linejoin="round"/>
+        <path d="M8.5 13.5L11 16L16 11" stroke="#F6F5F2" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <p class="eyebrow">Before you start</p>
+    <h2 class="screen-title">Request a special event</h2>
+    <p class="screen-desc">
+      Use this form to request equipment, beer, and non-alcoholic product for an upcoming event.
+      It takes about 5–10 minutes. Once submitted, your request is documented and routed for approval.
+    </p>
+    <div class="btn-row" style="justify-content:flex-end;">
+      <button class="btn-primary" onclick="goTo('event')">Start Request →</button>
+    </div>
+  </section>
+
+  <!-- EVENT DETAILS -->
+  <section class="screen" data-screen="event">
+    <p class="eyebrow">Step 1</p>
+    <h2 class="screen-title">Event Details</h2>
+    <p class="screen-desc">Basic facts about the event and whether you need rental equipment.</p>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Date of Event <span class="req">*</span></label>
+        <input type="date" id="f_eventDate" required>
+      </div>
+      <div class="field">
+        <label>Requested Date of Setup <span class="req">*</span></label>
+        <input type="date" id="f_setupDate" required>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Equipment Rental <span class="req">*</span></label>
+      <select id="f_equipmentRental" required onchange="onEquipmentRentalChange()">
+        <option value="">Select…</option>
+        <option value="Yes">Yes</option>
+        <option value="No">No</option>
+      </select>
+    </div>
+
+    <div class="conditional" id="equipmentDetails">
+      <div class="conditional-inner">
+        <label style="margin-bottom:10px;">Items to Rent</label>
+        <p class="helper-note" style="margin-top:-4px; margin-bottom:14px;">Enter a quantity for each item you need. Leave at 0 for items you don't need.</p>
+        <div id="equipmentBlocks"></div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-ghost" onclick="goTo('home')">← Back</button>
+      <button class="btn-primary" onclick="validateEvent()">Next →</button>
+    </div>
+  </section>
+
+  <!-- BEER ORDER -->
+  <section class="screen" data-screen="beer">
+    <p class="eyebrow">Step 2</p>
+    <h2 class="screen-title">Beer Order</h2>
+    <p class="screen-desc">Add every beer product needed for this event. You can add as many as you need.</p>
+
+    <div id="beerBlocks"></div>
+    <button type="button" class="btn-add" onclick="beerAddProduct()">+ Add another product</button>
+    <p class="helper-note" id="beerError" style="display:none; color:var(--danger);">Please fill in a Product and Quantity for each line before continuing.</p>
+
+    <div class="btn-row">
+      <button class="btn-ghost" onclick="goTo('event')">← Back</button>
+      <button class="btn-primary" onclick="validateBeer()">Next →</button>
+    </div>
+  </section>
+
+  <!-- NON-ALCOHOLIC ORDER -->
+  <section class="screen" data-screen="nonalc">
+    <p class="eyebrow">Step 3</p>
+    <h2 class="screen-title">Non-Alcoholic Order</h2>
+    <p class="screen-desc">Add every non-alcoholic product needed for this event. You can add as many as you need.</p>
+
+    <div id="naBlocks"></div>
+    <button type="button" class="btn-add" onclick="naAddProduct()">+ Add another product</button>
+    <p class="helper-note" id="naError" style="display:none; color:var(--danger);">Please fill in a Product and Quantity for each line before continuing.</p>
+
+    <div class="btn-row">
+      <button class="btn-ghost" onclick="goTo('beer')">← Back</button>
+      <button class="btn-primary" onclick="validateNa()">Next →</button>
+    </div>
+  </section>
+
+  <!-- EVENT CONTACT -->
+  <section class="screen" data-screen="contact">
+    <p class="eyebrow">Step 4</p>
+    <h2 class="screen-title">Event Contact Information</h2>
+    <p class="screen-desc">Who is responsible for this event request?</p>
+
+    <div class="field">
+      <label>Name of Person Responsible <span class="req">*</span></label>
+      <input type="text" id="f_contactName" placeholder="Full name" required>
+    </div>
+
+    <div class="field">
+      <label>Address of Person Responsible <span class="req">*</span></label>
+      <input type="text" id="f_contactAddress" placeholder="Street address" required>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Email of Person Responsible <span class="req">*</span></label>
+        <input type="email" id="f_contactEmail" placeholder="name@company.com" required>
+      </div>
+      <div class="field">
+        <label>Phone of Person Responsible <span class="req">*</span></label>
+        <input type="tel" id="f_contactPhone" placeholder="(555)-555-5555" required>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-ghost" onclick="goTo('nonalc')">← Back</button>
+      <button class="btn-primary" onclick="validateContact()">Review Request →</button>
+    </div>
+  </section>
+
+  <!-- REVIEW + SIGNATURE -->
+  <section class="screen" data-screen="review">
+    <p class="eyebrow">Final Step</p>
+    <h2 class="screen-title">Review & Sign</h2>
+    <p class="screen-desc">Check everything below, then sign to submit your request.</p>
+
+    <div class="error-banner" id="submitError">Something went wrong submitting your request. Please try again.</div>
+
+    <div id="reviewContent"></div>
+
+    <div id="agreementGate" style="display:none;"></div>
+
+    <!-- Signature -->
+    <div class="field" id="signatureSection" style="margin-top:6px; position:relative;">
+      <label>Requestor Signature <span class="req">*</span></label>
+      <p class="screen-desc" style="margin-bottom:14px;">By signing below, you confirm the information in this request is accurate<span id="sigAgreeClause" style="display:none;"> and that you agree to the Equipment Rental Agreement above</span>.</p>
+
+      <div class="sig-tabs">
+        <button type="button" class="sig-tab active" id="sigTabDraw" onclick="switchSignatureMode('draw')">Draw Signature</button>
+        <button type="button" class="sig-tab" id="sigTabType" onclick="switchSignatureMode('type')">Type Name</button>
+      </div>
+
+      <div id="sigDrawWrap">
+        <div class="sig-canvas-wrap">
+          <canvas id="sigCanvas" class="sig-canvas"></canvas>
+          <span class="sig-canvas-placeholder" id="sigPlaceholder">Sign here — finger or mouse</span>
+        </div>
+        <div class="sig-actions">
+          <button type="button" class="btn-secondary" onclick="clearSignature()">Clear</button>
+        </div>
+      </div>
+
+      <div id="sigTypeWrap" style="display:none;">
+        <input type="text" id="sigTypedName" class="sig-typed-input" placeholder="Type your full legal name" oninput="clearSigError()">
+      </div>
+
+      <p class="sig-timestamp-note">The date and time will be recorded automatically when you submit.</p>
+      <p class="helper-note" id="sigError" style="color:var(--danger); display:none;">Please provide a signature before submitting.</p>
+
+      <div id="signatureLockOverlay" class="signature-lock-overlay" style="display:none;">
+        <span>Review and agree to the Equipment Rental Agreement above to unlock the signature.</span>
+      </div>
+    </div>
+
+    <!-- Honeypot field — real users never see or fill this -->
+    <div class="hp-field" aria-hidden="true">
+      <label for="hp_website">Leave this field blank</label>
+      <input type="text" id="hp_website" name="website" tabindex="-1" autocomplete="off">
+    </div>
+
+    <!-- Turnstile widget mounts here — replace data-sitekey with the real Cloudflare Turnstile site key registered for this page -->
+    <div class="field" style="margin-top:22px;">
+      <div class="cf-turnstile" data-sitekey="0x4AAAAAAEdNwikuVc8WhWCj" data-callback="onTurnstileOK"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-ghost" onclick="goTo('contact')">← Back</button>
+      <button class="btn-submit" id="submitBtn" onclick="submitRequest()">Submit Request</button>
+    </div>
+  </section>
+
+  <!-- SUCCESS -->
+  <section class="screen" data-screen="success">
+    <div class="success-wrap">
+      <div class="success-check">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none"><path d="M4 12L9 17L20 6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h2 class="screen-title" style="text-align:center;">Request Submitted</h2>
+      <p class="screen-desc" style="text-align:center; max-width:420px; margin-left:auto; margin-right:auto;">
+        Your special event request has been submitted. Reference number: <strong id="finalCaseId"></strong>
+      </p>
+    </div>
+  </section>
+
+</div>
+
+<!-- Equipment Rental Agreement modal — scroll to the bottom to unlock "I Agree" -->
+<div class="agreement-modal" id="agreementModal">
+  <div class="agreement-dialog">
+    <div class="agreement-header">
+      <div>
+        <h3>Equipment Rental Agreement</h3>
+        <p class="agreement-version" id="agreementVersionLabel"></p>
+      </div>
+      <button type="button" class="agreement-close" onclick="closeAgreementModal()" aria-label="Close">✕</button>
+    </div>
+    <div class="agreement-scroll" id="agreementScroll">
+      <div id="agreementPages"></div>
+      <p class="agreement-loading" id="agreementLoading">Loading agreement…</p>
+    </div>
+    <div class="agreement-agree-bar" id="agreementAgreeBar">
+      <span>You've reached the end of the agreement.</span>
+      <button type="button" class="btn-submit" onclick="acceptAgreement()">I Agree to the Rental Terms</button>
+    </div>
+  </div>
+</div>
+
+<footer>Submissions are reviewed by the Special Events team.</footer>
+
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+/* ========= State ========= */
+const state = {
+  beer: [],   // ids — field values read from DOM by id at review/submit time
+  na: [],     // ids
+  turnstileToken: null
+};
+let nextBeerId = 1;
+let nextNaId = 1;
+let turnstileOK = false;
+
+const EQUIPMENT_CATALOG = [
+  { key: 'iceDown',      name: 'Ice Down',      price: 50 },
+  { key: 'smallTrailer', name: 'Small Trailer', price: 150 },
+  { key: 'largeTrailer', name: 'Large Trailer', price: 250 },
+  { key: 'draftTrailer', name: 'Draft Trailer', price: 200 },
+  { key: 'kegBox',       name: 'Keg Box',       price: 150 }
+];
+
+const FLOW = ['home','event','beer','nonalc','contact','review','success'];
+
+// "Loss and Damage Product Search" flow — same live product list, reused here to power
+// the Product field's typeahead on both the Beer Order and Non-Alcoholic Order lines.
+const SEARCH_ENDPOINT = 'https://default0c07cc35444246a2a2b1a250d653b9.2f.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/22/workflows/3be4fa0e77ee4e9f85bf50dae8ec55e0/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=GL4LSEc0Dl1M9nY8f4bhxU1roFE1RVyo9NIorcUPLoA';
+
+// Category filters for the two order sections. Sent to the search flow as a "categories"
+// field on the request (in case it filters server-side), and also applied client-side as a
+// safety net (see normalizeSearchResults) in case the flow ignores unknown request fields
+// and just returns everything. ASSUMPTION: the product list's category field is named one of
+// CATEGORY_FIELD_CANDIDATES below and its values are/contain these strings — if the real field
+// name or category labels differ, update BEER_CATEGORIES/NONALC_CATEGORIES/CATEGORY_FIELD_CANDIDATES
+// to match (check a raw response in the browser console — matches are logged there).
+const BEER_CATEGORIES = ['Beer', 'Wine', 'Light Spirits'];
+const NONALC_CATEGORIES = ['Non-Alc', 'Non-Alcoholic', 'NonAlc'];
+const CATEGORY_FIELD_CANDIDATES = ['category', 'productCategory', 'categoryName', 'type', 'productType'];
+
+/* ========= Navigation ========= */
+function goTo(screenName) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelector(`[data-screen="${screenName}"]`).classList.add('active');
+  window.scrollTo({top:0, behavior:'smooth'});
+  renderStepper(screenName);
+}
+function renderStepper(current) {
+  const idx = FLOW.indexOf(current);
+  const stepper = document.getElementById('stepper');
+  stepper.innerHTML = '';
+  FLOW.forEach((s, i) => {
+    const seg = document.createElement('div');
+    seg.className = 'step-seg' + (i < idx ? ' done' : i === idx ? ' current' : '');
+    stepper.appendChild(seg);
+  });
+  document.getElementById('stepLabelLeft').textContent = screenTitle(current);
+  document.getElementById('stepLabelRight').textContent = idx >= 0 ? `${idx+1} of ${FLOW.length}` : '';
+}
+function screenTitle(s) {
+  const map = {home:'Start', event:'Event Details', beer:'Beer Order', nonalc:'N/A Order', contact:'Contact', review:'Review & Sign', success:'Done'};
+  return map[s] || s;
+}
+function val(id) { const el = document.getElementById(id); return el ? el.value : ''; }
+
+/* ========= Step 1: Event Details ========= */
+function onEquipmentRentalChange() {
+  const on = val('f_equipmentRental') === 'Yes';
+  document.getElementById('equipmentDetails').classList.toggle('open', on);
+  if (on) renderEquipmentBlocks();
+}
+function renderEquipmentBlocks() {
+  const wrap = document.getElementById('equipmentBlocks');
+  wrap.innerHTML = EQUIPMENT_CATALOG.map(item => `
+    <div class="equip-item">
+      <div class="equip-info">
+        <div class="equip-name">${item.name}</div>
+        <div class="equip-price">$${item.price} each</div>
+      </div>
+      <div class="equip-qty">
+        <label>Qty</label>
+        <input type="number" id="eq_${item.key}" min="0" step="1" placeholder="0">
+      </div>
+    </div>
+  `).join('');
+}
+function validateEvent() {
+  const required = ['f_eventDate','f_setupDate','f_equipmentRental'];
+  for (const id of required) {
+    const el = document.getElementById(id);
+    if (!el.value) { el.focus(); el.style.borderColor = 'var(--danger)'; return; }
+    el.style.borderColor = '';
+  }
+  goTo('beer');
+}
+
+/* ========= Step 2: Beer Order (dynamic add/remove list) =========
+   Blocks are appended/removed individually (never rebuilt via innerHTML) so
+   values already typed into earlier rows survive adding/removing a row. */
+function beerAddProduct() {
+  const id = nextBeerId++;
+  state.beer.push(id);
+  const prefix = `beer${id}`;
+  const block = document.createElement('div');
+  block.className = 'line-item-block';
+  block.id = `block_${prefix}`;
+  block.innerHTML = `
+    <h4>Product <span class="pnum"></span> <button type="button" class="line-item-remove" onclick="beerRemoveProduct(${id})">Remove</button></h4>
+    <div class="field-row">
+      <div class="field field-typeahead">
+        <label>Product <span class="req">*</span></label>
+        <input type="text" id="${prefix}_product" placeholder="Start typing a product name… (e.g. Miller Lite)" autocomplete="off" oninput="onProductInput('${prefix}_product', BEER_CATEGORIES)">
+        <div class="typeahead-list" id="${prefix}_product_list"></div>
+      </div>
+      <div class="field"><label>Quantity <span class="req">*</span></label><input type="number" id="${prefix}_quantity" placeholder="Quantity" min="1"></div>
+    </div>
+  `;
+  document.getElementById('beerBlocks').appendChild(block);
+  renumberBeer();
+}
+function beerRemoveProduct(id) {
+  if (state.beer.length <= 1) return; // at least one line required
+  state.beer = state.beer.filter(x => x !== id);
+  const el = document.getElementById(`block_beer${id}`);
+  if (el) el.remove();
+  renumberBeer();
+}
+function renumberBeer() {
+  state.beer.forEach((id, i) => {
+    const block = document.getElementById(`block_beer${id}`);
+    if (!block) return;
+    block.querySelector('.pnum').textContent = i + 1;
+    block.querySelector('.line-item-remove').disabled = state.beer.length <= 1;
+  });
+}
+function validateBeer() {
+  const errEl = document.getElementById('beerError');
+  for (const id of state.beer) {
+    const prefix = `beer${id}`;
+    if (!val(`${prefix}_product`) || !val(`${prefix}_quantity`)) {
+      errEl.style.display = 'block';
+      document.getElementById(`${prefix}_product`).scrollIntoView({behavior:'smooth', block:'center'});
+      return;
+    }
+  }
+  errEl.style.display = 'none';
+  goTo('nonalc');
+}
+
+/* ========= Step 3: Non-Alcoholic Order (dynamic add/remove list) =========
+   Same append/remove-in-place approach as Beer Order — see note above. */
+function naAddProduct() {
+  const id = nextNaId++;
+  state.na.push(id);
+  const prefix = `na${id}`;
+  const block = document.createElement('div');
+  block.className = 'line-item-block';
+  block.id = `block_${prefix}`;
+  block.innerHTML = `
+    <h4>Product <span class="pnum"></span> <button type="button" class="line-item-remove" onclick="naRemoveProduct(${id})">Remove</button></h4>
+    <div class="field-row">
+      <div class="field field-typeahead">
+        <label>Product <span class="req">*</span></label>
+        <input type="text" id="${prefix}_product" placeholder="Start typing a product name… (e.g. Coca-Cola 12oz cans)" autocomplete="off" oninput="onProductInput('${prefix}_product', NONALC_CATEGORIES)">
+        <div class="typeahead-list" id="${prefix}_product_list"></div>
+      </div>
+      <div class="field"><label>Quantity <span class="req">*</span></label><input type="number" id="${prefix}_quantity" placeholder="Quantity" min="1"></div>
+    </div>
+  `;
+  document.getElementById('naBlocks').appendChild(block);
+  renumberNa();
+}
+function naRemoveProduct(id) {
+  if (state.na.length <= 1) return;
+  state.na = state.na.filter(x => x !== id);
+  const el = document.getElementById(`block_na${id}`);
+  if (el) el.remove();
+  renumberNa();
+}
+function renumberNa() {
+  state.na.forEach((id, i) => {
+    const block = document.getElementById(`block_na${id}`);
+    if (!block) return;
+    block.querySelector('.pnum').textContent = i + 1;
+    block.querySelector('.line-item-remove').disabled = state.na.length <= 1;
+  });
+}
+function validateNa() {
+  const errEl = document.getElementById('naError');
+  for (const id of state.na) {
+    const prefix = `na${id}`;
+    if (!val(`${prefix}_product`) || !val(`${prefix}_quantity`)) {
+      errEl.style.display = 'block';
+      document.getElementById(`${prefix}_product`).scrollIntoView({behavior:'smooth', block:'center'});
+      return;
+    }
+  }
+  errEl.style.display = 'none';
+  goTo('contact');
+}
+
+/* ========= Product typeahead (shared by Beer Order and Non-Alcoholic Order lines) =========
+   Generalized by fieldId (e.g. "beer3_product" or "na1_product") so both sections share one
+   implementation. Mirrors the Loss and Damage form's typeahead against the same product list. */
+const typeaheadTimers = {};
+const typeaheadResults = {};
+const typeaheadAbortControllers = {};
+const SEARCH_TIMEOUT_MS = 10000;
+
+function escapeHtml(str) {
+  const div = document.createElement('div');
+  div.textContent = str == null ? '' : String(str);
+  return div.innerHTML;
+}
+
+function onProductInput(fieldId, categories) {
+  const term = val(fieldId).trim();
+  const listEl = document.getElementById(fieldId + '_list');
+  if (!listEl) return;
+
+  clearTimeout(typeaheadTimers[fieldId]);
+  if (typeaheadAbortControllers[fieldId]) { typeaheadAbortControllers[fieldId].abort(); }
+  if (term.length < 2) { listEl.classList.remove('show'); listEl.innerHTML = ''; return; }
+
+  typeaheadTimers[fieldId] = setTimeout(async () => {
+    // Show a "Searching…" state immediately so a slow response doesn't look stuck/dead.
+    listEl.innerHTML = `<div class="typeahead-empty">Searching…</div>`;
+    listEl.classList.add('show');
+
+    const controller = new AbortController();
+    typeaheadAbortControllers[fieldId] = controller;
+    const timeoutId = setTimeout(() => controller.abort(), SEARCH_TIMEOUT_MS);
+
+    try {
+      const res = await fetch(SEARCH_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        // "categories" is sent in case the flow filters server-side; results are also
+        // filtered client-side below as a safety net either way.
+        body: JSON.stringify({ searchTerm: term, categories }),
+        signal: controller.signal
+      });
+      if (!res.ok) throw new Error('Bad response: ' + res.status);
+      const raw = await res.json();
+      renderTypeahead(fieldId, normalizeSearchResults(raw, categories));
+    } catch (err) {
+      // Typeahead is a convenience, not required for submission — fail quietly but visibly.
+      listEl.innerHTML = `<div class="typeahead-empty">${err.name === 'AbortError' ? 'Search timed out' : 'Search unavailable'} — you can still type the product name manually</div>`;
+      listEl.classList.add('show');
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }, 300);
+}
+
+// Defensive against a malformed flow response (e.g. a Power Automate loop bug that wraps
+// each result in a nested duplicate array instead of returning one flat array). Flattens
+// one level if needed and de-dupes by productId/productName so a backend hiccup degrades
+// to "fewer/odd results" instead of blank rows. Also applies the category filter client-side
+// (see CATEGORY_FIELD_CANDIDATES note above SEARCH_ENDPOINT) as a safety net in case the flow
+// doesn't already filter by the "categories" field sent in the request.
+let loggedUnknownCategoryField = false;
+function normalizeSearchResults(raw, categories) {
+  let results = Array.isArray(raw) ? raw : [];
+  if (results.length && Array.isArray(results[0])) {
+    results = results.flat();
+  }
+  const seen = new Set();
+  const deduped = [];
+  for (const r of results) {
+    if (!r || typeof r !== 'object' || !r.productName) continue;
+    const key = r.productId != null ? String(r.productId) : r.productName;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(r);
+  }
+
+  if (!categories || !categories.length) return deduped;
+
+  const field = deduped.length ? CATEGORY_FIELD_CANDIDATES.find(f => deduped[0][f] != null) : null;
+  if (!field) {
+    // Couldn't find a recognizable category field on the response — leave results
+    // unfiltered rather than hiding everything, and flag it once for whoever's testing.
+    if (!loggedUnknownCategoryField && deduped.length) {
+      console.warn('Product search category filter: no field among', CATEGORY_FIELD_CANDIDATES, 'found on results — showing unfiltered. Sample result:', deduped[0]);
+      loggedUnknownCategoryField = true;
+    }
+    return deduped;
+  }
+  const wanted = categories.map(c => c.toLowerCase());
+  return deduped.filter(r => {
+    const val = String(r[field] || '').toLowerCase();
+    return wanted.some(w => val.includes(w.toLowerCase()));
+  });
+}
+
+function renderTypeahead(fieldId, results) {
+  const listEl = document.getElementById(fieldId + '_list');
+  typeaheadResults[fieldId] = results;
+
+  if (!results.length) {
+    listEl.innerHTML = `<div class="typeahead-empty">No matching products found</div>`;
+    listEl.classList.add('show');
+    return;
+  }
+  listEl.innerHTML = results.map((r, i) => `
+    <div class="typeahead-item" onmousedown="selectProduct('${fieldId}', ${i})">
+      <div class="ta-name">${escapeHtml(r.productName)}</div>
+      <div class="ta-meta">${[r.supplier, r.brand, r.package].filter(Boolean).map(escapeHtml).join(' · ')}</div>
+    </div>
+  `).join('');
+  listEl.classList.add('show');
+}
+
+function selectProduct(fieldId, index) {
+  const r = (typeaheadResults[fieldId] || [])[index];
+  if (!r) return;
+  document.getElementById(fieldId).value = r.productName || '';
+  const listEl = document.getElementById(fieldId + '_list');
+  listEl.classList.remove('show');
+  listEl.innerHTML = '';
+}
+
+// Click outside a typeahead dropdown closes it. (Uses mousedown, not click, on the
+// options themselves above, so a selection registers before this blur-style close fires.)
+document.addEventListener('click', (e) => {
+  document.querySelectorAll('.typeahead-list.show').forEach(list => {
+    if (!list.parentElement.contains(e.target)) { list.classList.remove('show'); }
+  });
+});
+
+/* ========= Phone number formatting ========= */
+function formatPhoneNumber(value) {
+  const digits = value.replace(/\D/g, '').slice(0, 10);
+  const len = digits.length;
+  if (len === 0) return '';
+  if (len < 4) return '(' + digits;
+  if (len < 7) return '(' + digits.slice(0, 3) + ')-' + digits.slice(3);
+  return '(' + digits.slice(0, 3) + ')-' + digits.slice(3, 6) + '-' + digits.slice(6);
+}
+document.addEventListener('input', (e) => {
+  if (e.target.matches('input[type="tel"]')) { e.target.value = formatPhoneNumber(e.target.value); }
+});
+
+/* ========= Step 4: Event Contact ========= */
+function validateContact() {
+  const required = ['f_contactName','f_contactAddress','f_contactEmail','f_contactPhone'];
+  for (const id of required) {
+    const el = document.getElementById(id);
+    if (!el.value.trim()) { el.focus(); el.style.borderColor = 'var(--danger)'; return; }
+    el.style.borderColor = '';
+  }
+  renderReview();
+  goTo('review');
+  initSignaturePad();
+}
+
+/* ========= Review ========= */
+function section(title, rows, screenName) {
+  const visible = rows.filter(([k,v,always]) => always || (v && String(v).trim() !== ''));
+  if (visible.length === 0) return '';
+  return `<div class="rv-section">
+    <h4>${title} <button class="rv-edit" style="float:right;" onclick="goTo('${screenName}')">Edit</button></h4>
+    ${visible.map(([k,v]) => `<div class="rv-row"><span class="k">${k}</span><span class="v">${v || '—'}</span></div>`).join('')}
+  </div>`;
+}
+function renderReview() {
+  const c = document.getElementById('reviewContent');
+  let html = '';
+
+  const equipRental = val('f_equipmentRental');
+  const eventRows = [
+    ['Date of Event', val('f_eventDate'), true],
+    ['Requested Date of Setup', val('f_setupDate'), true],
+    ['Equipment Rental', equipRental, true],
+  ];
+  html += section('Event', eventRows, 'event');
+
+  if (equipRental === 'Yes') {
+    let equipHtml = `<div class="rv-section"><h4>Items to Rent <button class="rv-edit" style="float:right;" onclick="goTo('event')">Edit</button></h4>`;
+    let any = false;
+    EQUIPMENT_CATALOG.forEach(item => {
+      const qty = parseInt(val(`eq_${item.key}`), 10) || 0;
+      if (qty > 0) {
+        any = true;
+        equipHtml += `<div class="rv-row"><span class="k">${item.name} ($${item.price} ea)</span><span class="v">${qty}</span></div>`;
+      }
+    });
+    if (!any) equipHtml += `<div class="rv-row"><span class="k">Items</span><span class="v">None selected</span></div>`;
+    equipHtml += `</div>`;
+    html += equipHtml;
+  }
+
+  let beerHtml = `<div class="rv-section"><h4>Beer Order <button class="rv-edit" style="float:right;" onclick="goTo('beer')">Edit</button></h4>`;
+  state.beer.forEach((id, i) => {
+    const p = `beer${id}`;
+    beerHtml += `<div class="rv-product">
+      <div class="rv-row"><span class="k">Product ${i+1}</span><span class="v">${val(`${p}_product`) || '—'}</span></div>
+      <div class="rv-row"><span class="k">Quantity</span><span class="v">${val(`${p}_quantity`) || '—'}</span></div>
+    </div>`;
+  });
+  beerHtml += `</div>`;
+  html += beerHtml;
+
+  let naHtml = `<div class="rv-section"><h4>Non-Alcoholic Order <button class="rv-edit" style="float:right;" onclick="goTo('nonalc')">Edit</button></h4>`;
+  state.na.forEach((id, i) => {
+    const p = `na${id}`;
+    naHtml += `<div class="rv-product">
+      <div class="rv-row"><span class="k">Product ${i+1}</span><span class="v">${val(`${p}_product`) || '—'}</span></div>
+      <div class="rv-row"><span class="k">Quantity</span><span class="v">${val(`${p}_quantity`) || '—'}</span></div>
+    </div>`;
+  });
+  naHtml += `</div>`;
+  html += naHtml;
+
+  html += section('Event Contact', [
+    ['Name', val('f_contactName'), true],
+    ['Address', val('f_contactAddress'), true],
+    ['Email', val('f_contactEmail'), true],
+    ['Phone', val('f_contactPhone'), true],
+  ], 'contact');
+
+  c.innerHTML = html;
+
+  renderAgreementGate(equipRental === 'Yes');
+}
+
+/* ========= Equipment Rental Agreement (gate + modal) =========
+   When Equipment Rental = Yes, the requestor must open the agreement, scroll to the
+   bottom, and click "I Agree" before the signature block unlocks. When = No, the whole
+   agreement step is skipped and the signature is available immediately. */
+let agreementAccepted = false;
+let agreementAcceptedAt = null;
+let agreementPdfDoc = null;
+
+// A stable label identifying which version of the agreement text is currently embedded below.
+// Update this every time RENTAL_AGREEMENT_PDF_BASE64 is swapped for a revised agreement, so the
+// acceptance record (shown on-screen, in the submitted payload, and in the Word packet's
+// AgreementVersion field) always says exactly which terms someone agreed to — even years later
+// after the agreement itself has since changed. Any short, human-readable label works.
+const AGREEMENT_VERSION_LABEL = "PLACEHOLDER — set to the real agreement's version/effective date";
+
+// PLACEHOLDER — replace with the real, current signed Equipment Rental Agreement PDF,
+// base64-encoded with no "data:" prefix (e.g. `base64 -w0 agreement.pdf` on macOS/Linux,
+// or `certutil -encode` on Windows then strip the header/footer lines). Everything else
+// in this section (modal, scroll-to-bottom detection, Agree button, signature lock) works
+// as soon as this constant is swapped for the real document — nothing else needs to change.
+const RENTAL_AGREEMENT_PDF_BASE64 = "JVBERi0xLjMKJZOMi54gUmVwb3J0TGFiIEdlbmVyYXRlZCBQREYgZG9jdW1lbnQgKG9wZW5zb3VyY2UpCjEgMCBvYmoKPDwKL0YxIDIgMCBSIC9GMiAzIDAgUgo+PgplbmRvYmoKMiAwIG9iago8PAovQmFzZUZvbnQgL0hlbHZldGljYSAvRW5jb2RpbmcgL1dpbkFuc2lFbmNvZGluZyAvTmFtZSAvRjEgL1N1YnR5cGUgL1R5cGUxIC9UeXBlIC9Gb250Cj4+CmVuZG9iagozIDAgb2JqCjw8Ci9CYXNlRm9udCAvSGVsdmV0aWNhLUJvbGQgL0VuY29kaW5nIC9XaW5BbnNpRW5jb2RpbmcgL05hbWUgL0YyIC9TdWJ0eXBlIC9UeXBlMSAvVHlwZSAvRm9udAo+PgplbmRvYmoKNCAwIG9iago8PAovQ29udGVudHMgMTAgMCBSIC9NZWRpYUJveCBbIDAgMCA2MTIgNzkyIF0gL1BhcmVudCA5IDAgUiAvUmVzb3VyY2VzIDw8Ci9Gb250IDEgMCBSIC9Qcm9jU2V0IFsgL1BERiAvVGV4dCAvSW1hZ2VCIC9JbWFnZUMgL0ltYWdlSSBdCj4+IC9Sb3RhdGUgMCAvVHJhbnMgPDwKCj4+IAogIC9UeXBlIC9QYWdlCj4+CmVuZG9iago1IDAgb2JqCjw8Ci9Db250ZW50cyAxMSAwIFIgL01lZGlhQm94IFsgMCAwIDYxMiA3OTIgXSAvUGFyZW50IDkgMCBSIC9SZXNvdXJjZXMgPDwKL0ZvbnQgMSAwIFIgL1Byb2NTZXQgWyAvUERGIC9UZXh0IC9JbWFnZUIgL0ltYWdlQyAvSW1hZ2VJIF0KPj4gL1JvdGF0ZSAwIC9UcmFucyA8PAoKPj4gCiAgL1R5cGUgL1BhZ2UKPj4KZW5kb2JqCjYgMCBvYmoKPDwKL0NvbnRlbnRzIDEyIDAgUiAvTWVkaWFCb3ggWyAwIDAgNjEyIDc5MiBdIC9QYXJlbnQgOSAwIFIgL1Jlc291cmNlcyA8PAovRm9udCAxIDAgUiAvUHJvY1NldCBbIC9QREYgL1RleHQgL0ltYWdlQiAvSW1hZ2VDIC9JbWFnZUkgXQo+PiAvUm90YXRlIDAgL1RyYW5zIDw8Cgo+PiAKICAvVHlwZSAvUGFnZQo+PgplbmRvYmoKNyAwIG9iago8PAovUGFnZU1vZGUgL1VzZU5vbmUgL1BhZ2VzIDkgMCBSIC9UeXBlIC9DYXRhbG9nCj4+CmVuZG9iago4IDAgb2JqCjw8Ci9BdXRob3IgKGFub255bW91cykgL0NyZWF0aW9uRGF0ZSAoRDoyMDI2MDgyNjIxMzUxNCswMCcwMCcpIC9DcmVhdG9yIChhbm9ueW1vdXMpIC9LZXl3b3JkcyAoKSAvTW9kRGF0ZSAoRDoyMDI2MDgyNjIxMzUxNCswMCcwMCcpIC9Qcm9kdWNlciAoUmVwb3J0TGFiIFBERiBMaWJyYXJ5IC0gXChvcGVuc291cmNlXCkpIAogIC9TdWJqZWN0ICh1bnNwZWNpZmllZCkgL1RpdGxlICh1bnRpdGxlZCkgL1RyYXBwZWQgL0ZhbHNlCj4+CmVuZG9iago5IDAgb2JqCjw8Ci9Db3VudCAzIC9LaWRzIFsgNCAwIFIgNSAwIFIgNiAwIFIgXSAvVHlwZSAvUGFnZXMKPj4KZW5kb2JqCjEwIDAgb2JqCjw8Ci9GaWx0ZXIgWyAvQVNDSUk4NURlY29kZSAvRmxhdGVEZWNvZGUgXSAvTGVuZ3RoIDQ5NQo+PgpzdHJlYW0KR2F1YTliPixyLydMX11vTUhMIlQralItImFlSy07OGxVbHUpYFBIKU49cmtBIzBQaWA0OiEmQTZvUzVRKjtfZS5GJCg8RWhgZS0wWlAjNW5FSDklNiFpMFY5YUdaLyowaFkjMjRUSi1EcVBiOVllbGdVNiclbC5mL1RKIl5UM11bRERzKkluNCQzWV4iTEciPVlxOE5jZ3RATiMzNk5oSFxvPEp0JmE8L3JAQz8mJ2ooRiksRkJVS04pRV1CTztlcSZnN1JjJ2BCKj5PUSlOMmNoXUYpIU00MGc2SDMoRVVIPEFkKG0nKD9ENW1mcyFIK0c5aks5VGwnJDg4QmU9KVdjci48YEhvXmM5Tj0kPSRsJFwmbzFNPyhyJiZoaVBwQ2s2NXBAW01gNT5CU2E3am1QXVIlTkEiP1ciLiluYDlRY14uRmloWXQhUC1QT2A2QzVkJ2A2cnMhZzxeMFA9InBZJ0grOEBjZ1I+RHFlMDo3UVMoPUhGSyRgcmxINlhCWFFYbTtTcjwwX15PWG5qLmAhXmtDZ1Q9b1cyT1tacDAwY18uPkQpM1wrMllfaWAxUGooPGhIcnU/XyJXJD9RP1tPP1E7KyQrKjNsN2hmXGRpV1UnMUYnOjdzQUBbSD47X1oqPVA3ZHA/KFdyKX4+ZW5kc3RyZWFtCmVuZG9iagoxMSAwIG9iago8PAovRmlsdGVyIFsgL0FTQ0lJODVEZWNvZGUgL0ZsYXRlRGVjb2RlIF0gL0xlbmd0aCA0OTUKPj4Kc3RyZWFtCkdhdWE5Yj4sci8nTF9db01ITCJUK2pSLSJhZUstOzhsVWx1KWBQSClOPXJrQSMwUGlgNDohJkE2b1M1USo7X2UuRiQoPEVoYGUtMFpQIzVuRUg5JTYhaTBWOWFHWi8qMGhZIzI0VEotRHFQYjlZZWxnVTYnJWwuZi9USiJeVDNdW0REcypJbjQkM1leIkxHIj1ZcThOY2d0QE4jMzZOaEhcbzxKdCZhPC9yQEM/JidqKEYpLEZCVUtOKUVdQU06aHRgZDdSYydgQio+T1EpTjJjaF1GKSFNNDBnNkgzKEVVSDxBZChtJyg/RDVtZnMhSCtHOWpLOVRsJyQ4OEJlPSlXY3IuPGBIb15jOU49JD0kbCRcJm8xTT8ociYmaGlQcENrNjVwQFtNYDU+QlNhN2ptUF1SJU5BIj9XIi4pbmA5UWNeLkZpaFl0IVAtUE9gNkM1ZCdgNnJzIWc8XjBQPSJwWSdIKzhAY2dSPkRxZTA6N1FTKD1IRkskYHJsSDZYQlhRWG07U3I8MF9eT1huai5gIV5rQ2dUPW9XMk9bWnAwMGNfLj5EKTNcKzJZX2lgMVBqKDxoSHJ1P18iVyQ/UT9bTz9ROyskKyozbDdoZlxkaVdVJzFGJzo3c0FAW0g+O19aKj1QN2RnUSJXcjJ+PmVuZHN0cmVhbQplbmRvYmoKMTIgMCBvYmoKPDwKL0ZpbHRlciBbIC9BU0NJSTg1RGVjb2RlIC9GbGF0ZURlY29kZSBdIC9MZW5ndGggNTM3Cj4+CnN0cmVhbQpHYXVhPTpOKV5WKHJsJUMnW08lVD4pTi1Cb1UlT0lTV3BOXmsyUycoRUpRIUgxW006I1wkJU5OQVEibl05Ll9bc1lMMzdGcjl0XCImREUmUFxZdCdgTVgoRUhNKlNObThXXEhUT2pjKmZPJEdJJV5CcFchRmpkYWQ3IT02VjI5cWhbWmItLzdFQjI/SHBgO2o7aj9LOVVePzNqT0FMQ01lPF02SldLYVo2TFRVdUR0V3VYNlxpc09KYVp0M3UwPU5NLkJEPS1DQClTV0NXXy1xTFJqKFo2Q01fSTZpYHBGLDYvbD1faTloV2lUIlJNWyUzLmFDODY5TVF1LztuZltnMW89IlBdcy5dbi00V14pSkklTDdgWjMvQF1QcHVpdV8jIXBnViRHS2YwaUE8a2s/WWhkaEtGOF8rUV5OSE5YSVdrJ3ROQzk8RmwyNk9Rb1ctUFhYO1dvIyZQPzslLVwySl46L2lQSmFdYG4zKV9ZLFNDNWNAKyNtNUxTMWlyakFTJytAPmtlKDxBbVwsUWQuV0NFa3M3TzxOUiElNUI5WTIyVXJXaDg/IjozKCxMNFdRazZaQ2dvMVwmUXNyXj0vRVxePS9GRzUxPms8P0lNRVdWRCVTNF4xP0xqSUVCRT9xTkI/QHFOQ1drZSlxMl43aC1kTDwkVm0pQyQzVVUqMDFLTzUtT1BUQ102UjA+MmVmV1MsZzA+fj5lbmRzdHJlYW0KZW5kb2JqCnhyZWYKMCAxMwowMDAwMDAwMDAwIDY1NTM1IGYgCjAwMDAwMDAwNjEgMDAwMDAgbiAKMDAwMDAwMDEwMiAwMDAwMCBuIAowMDAwMDAwMjA5IDAwMDAwIG4gCjAwMDAwMDAzMjEgMDAwMDAgbiAKMDAwMDAwMDUxNSAwMDAwMCBuIAowMDAwMDAwNzA5IDAwMDAwIG4gCjAwMDAwMDA5MDMgMDAwMDAgbiAKMDAwMDAwMDk3MSAwMDAwMCBuIAowMDAwMDAxMjMyIDAwMDAwIG4gCjAwMDAwMDEzMDMgMDAwMDAgbiAKMDAwMDAwMTg4OSAwMDAwMCBuIAowMDAwMDAyNDc1IDAwMDAwIG4gCnRyYWlsZXIKPDwKL0lEIApbPGE4Nzg2Njg5Yjk0ODU0MTU5YWE1MDM2ZGFjNjQ4ODgyPjxhODc4NjY4OWI5NDg1NDE1OWFhNTAzNmRhYzY0ODg4Mj5dCiUgUmVwb3J0TGFiIGdlbmVyYXRlZCBQREYgZG9jdW1lbnQgLS0gZGlnZXN0IChvcGVuc291cmNlKQoKL0luZm8gOCAwIFIKL1Jvb3QgNyAwIFIKL1NpemUgMTMKPj4Kc3RhcnR4cmVmCjMxMDMKJSVFT0YK"; // PLACEHOLDER PDF — swap for the real agreement (see comment above)
+
+function renderAgreementGate(equipmentRentalRequested) {
+  const gate = document.getElementById('agreementGate');
+  const sigSection = document.getElementById('signatureSection');
+  const lockOverlay = document.getElementById('signatureLockOverlay');
+  const agreeClause = document.getElementById('sigAgreeClause');
+
+  if (!equipmentRentalRequested) {
+    gate.style.display = 'none';
+    lockOverlay.style.display = 'none';
+    agreeClause.style.display = 'none';
+    return;
+  }
+
+  agreeClause.style.display = '';
+  gate.style.display = 'block';
+
+  if (agreementAccepted) {
+    gate.className = 'agreement-gate accepted';
+    gate.innerHTML = `
+      <div class="dl-title">Equipment Rental Agreement</div>
+      <p class="accepted-note"><span class="check">✓</span> Agreement accepted ${formatTimestamp(agreementAcceptedAt)} <span style="color:var(--muted); font-weight:400;">(${escapeHtml(AGREEMENT_VERSION_LABEL)})</span></p>
+      <button type="button" class="agreement-reopen" onclick="openAgreementModal()">View Agreement Again</button>
+    `;
+    lockOverlay.style.display = 'none';
+  } else {
+    gate.className = 'agreement-gate';
+    gate.innerHTML = `
+      <div class="dl-title">Equipment Rental Agreement</div>
+      <p>Since this request includes equipment rental, you'll need to review and agree to the Equipment Rental Agreement before you can sign. Read it all the way to the end to unlock the "I Agree" button.</p>
+      <button type="button" class="btn-primary" onclick="openAgreementModal()">Open Rental Agreement</button>
+    `;
+    lockOverlay.style.display = 'flex';
+  }
+}
+
+function formatTimestamp(iso) {
+  if (!iso) return '';
+  try {
+    return 'on ' + new Date(iso).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+  } catch (err) {
+    return '';
+  }
+}
+
+async function openAgreementModal() {
+  document.getElementById('agreementModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  const scrollEl = document.getElementById('agreementScroll');
+  if (!scrollEl.dataset.wired) {
+    scrollEl.addEventListener('scroll', checkAgreementScroll);
+    scrollEl.dataset.wired = '1';
+  }
+
+  if (!agreementPdfDoc) {
+    try {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      const bytes = Uint8Array.from(atob(RENTAL_AGREEMENT_PDF_BASE64), ch => ch.charCodeAt(0));
+      agreementPdfDoc = await pdfjsLib.getDocument({ data: bytes }).promise;
+      await renderAgreementPages();
+      document.getElementById('agreementLoading').style.display = 'none';
+    } catch (err) {
+      document.getElementById('agreementLoading').textContent = 'Could not load the agreement. Please contact the Special Events team.';
+    }
+  }
+  // Re-check in case the document is short enough to already be "at the bottom",
+  // or the modal was reopened after already being accepted.
+  setTimeout(checkAgreementScroll, 50);
+}
+
+async function renderAgreementPages() {
+  const container = document.getElementById('agreementPages');
+  container.innerHTML = '';
+  for (let i = 1; i <= agreementPdfDoc.numPages; i++) {
+    const page = await agreementPdfDoc.getPage(i);
+    const viewport = page.getViewport({ scale: 1.4 });
+    const canvas = document.createElement('canvas');
+    canvas.className = 'agreement-page';
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    container.appendChild(canvas);
+    await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+  }
+}
+
+function checkAgreementScroll() {
+  const el = document.getElementById('agreementScroll');
+  const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 24;
+  document.getElementById('agreementAgreeBar').classList.toggle('show', atBottom || agreementAccepted);
+}
+
+function acceptAgreement() {
+  agreementAccepted = true;
+  agreementAcceptedAt = new Date().toISOString();
+  closeAgreementModal();
+  renderAgreementGate(val('f_equipmentRental') === 'Yes');
+}
+
+function closeAgreementModal() {
+  document.getElementById('agreementModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+/* ========= Signature ========= */
+const sig = { mode:'draw', hasContent:false, canvas:null, ctx:null, initialized:false };
+
+function initSignaturePad() {
+  if (sig.initialized) return;
+  sig.canvas = document.getElementById('sigCanvas');
+  sig.ctx = sig.canvas.getContext('2d');
+
+  const rect = sig.canvas.getBoundingClientRect();
+  const ratio = window.devicePixelRatio || 1;
+  sig.canvas.width = rect.width * ratio;
+  sig.canvas.height = rect.height * ratio;
+  sig.ctx.scale(ratio, ratio);
+  sig.ctx.strokeStyle = '#16203A';
+  sig.ctx.lineWidth = 2.2;
+  sig.ctx.lineCap = 'round';
+  sig.ctx.lineJoin = 'round';
+
+  let drawing = false;
+  function getPos(e) {
+    const r = sig.canvas.getBoundingClientRect();
+    if (e.touches && e.touches.length) return { x: e.touches[0].clientX - r.left, y: e.touches[0].clientY - r.top };
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  }
+  function startDraw(e) {
+    e.preventDefault();
+    drawing = true;
+    document.getElementById('sigPlaceholder').style.display = 'none';
+    const pos = getPos(e);
+    sig.ctx.beginPath();
+    sig.ctx.moveTo(pos.x, pos.y);
+  }
+  function moveDraw(e) {
+    if (!drawing) return;
+    e.preventDefault();
+    const pos = getPos(e);
+    sig.ctx.lineTo(pos.x, pos.y);
+    sig.ctx.stroke();
+    sig.hasContent = true;
+    clearSigError();
+  }
+  function endDraw() { drawing = false; }
+
+  sig.canvas.addEventListener('mousedown', startDraw);
+  sig.canvas.addEventListener('mousemove', moveDraw);
+  window.addEventListener('mouseup', endDraw);
+  sig.canvas.addEventListener('touchstart', startDraw, { passive: false });
+  sig.canvas.addEventListener('touchmove', moveDraw, { passive: false });
+  sig.canvas.addEventListener('touchend', endDraw);
+
+  sig.initialized = true;
+}
+function clearSignature() {
+  sig.ctx.clearRect(0, 0, sig.canvas.width, sig.canvas.height);
+  sig.hasContent = false;
+  document.getElementById('sigPlaceholder').style.display = '';
+}
+function switchSignatureMode(mode) {
+  sig.mode = mode;
+  document.getElementById('sigTabDraw').classList.toggle('active', mode === 'draw');
+  document.getElementById('sigTabType').classList.toggle('active', mode === 'type');
+  document.getElementById('sigDrawWrap').style.display = mode === 'draw' ? '' : 'none';
+  document.getElementById('sigTypeWrap').style.display = mode === 'type' ? '' : 'none';
+  clearSigError();
+}
+function clearSigError() { document.getElementById('sigError').style.display = 'none'; }
+function hasValidSignature() {
+  if (sig.mode === 'draw') return sig.hasContent;
+  return document.getElementById('sigTypedName').value.trim().length > 0;
+}
+function rasterizeTypedSignature(name) {
+  const width = 600, height = 160;
+  const canvas = document.createElement('canvas');
+  canvas.width = width; canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, width, height);
+  ctx.fillStyle = '#16203A';
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'left';
+
+  let fontSize = 56;
+  ctx.font = `${fontSize}px 'Dancing Script', cursive`;
+  let m = ctx.measureText(name);
+  while (m.width > width - 40 && fontSize > 20) {
+    fontSize -= 2;
+    ctx.font = `${fontSize}px 'Dancing Script', cursive`;
+    m = ctx.measureText(name);
+  }
+  ctx.fillText(name, (width - m.width) / 2, height / 2);
+  return canvas.toDataURL('image/png');
+}
+async function getSignatureData() {
+  if (sig.mode === 'draw') return sig.hasContent ? sig.canvas.toDataURL('image/png') : '';
+  const typedName = document.getElementById('sigTypedName').value.trim();
+  if (!typedName) return '';
+  try { await document.fonts.load(`56px 'Dancing Script'`); } catch (err) { /* fall back to default rendering */ }
+  return rasterizeTypedSignature(typedName);
+}
+
+/* ========= Turnstile ========= */
+function onTurnstileOK(token) { state.turnstileToken = token; turnstileOK = true; }
+
+/* ========= Submit ========= */
+async function submitRequest() {
+  const errorBanner = document.getElementById('submitError');
+  errorBanner.classList.remove('show');
+
+  // Honeypot check — if filled, silently pretend to succeed (don't tip off the bot)
+  if (document.getElementById('hp_website').value) {
+    goTo('success');
+    return;
+  }
+
+  if (!turnstileOK) {
+    errorBanner.textContent = 'Please complete the verification checkbox above before submitting.';
+    errorBanner.classList.add('show');
+    return;
+  }
+  errorBanner.textContent = 'Something went wrong submitting your request. Please try again.';
+
+  if (val('f_equipmentRental') === 'Yes' && !agreementAccepted) {
+    errorBanner.textContent = 'Please open and agree to the Equipment Rental Agreement before submitting.';
+    errorBanner.classList.add('show');
+    document.getElementById('agreementGate').scrollIntoView({behavior:'smooth', block:'center'});
+    return;
+  }
+
+  if (!hasValidSignature()) {
+    document.getElementById('sigError').style.display = 'block';
+    document.getElementById('sigError').scrollIntoView({behavior:'smooth', block:'center'});
+    return;
+  }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
+
+  const referenceId = 'SE-' + new Date().toISOString().replace(/[-:T.Z]/g,'').slice(0,14);
+  const equipmentRental = val('f_equipmentRental');
+
+  const payload = {
+    turnstileToken: state.turnstileToken,
+    honeypot: '', // always sent empty by real users
+    referenceId,
+    dateSubmitted: new Date().toISOString(),
+
+    eventDate: val('f_eventDate'),
+    setupDate: val('f_setupDate'),
+    equipmentRental,
+    equipmentItems: equipmentRental === 'Yes'
+      ? EQUIPMENT_CATALOG.map(item => ({
+          item: item.name,
+          unitPrice: item.price,
+          quantity: parseInt(val(`eq_${item.key}`), 10) || 0
+        })).filter(i => i.quantity > 0)
+      : [],
+
+    beerOrder: state.beer.map(id => {
+      const p = `beer${id}`;
+      return { product: val(`${p}_product`), quantity: val(`${p}_quantity`) };
+    }),
+    nonAlcoholicOrder: state.na.map(id => {
+      const p = `na${id}`;
+      return { product: val(`${p}_product`), quantity: val(`${p}_quantity`) };
+    }),
+
+    contactName: val('f_contactName'),
+    contactAddress: val('f_contactAddress'),
+    contactEmail: val('f_contactEmail'),
+    contactPhone: val('f_contactPhone'),
+
+    equipmentDisclaimerShown: equipmentRental === 'Yes',
+    agreementAccepted: equipmentRental === 'Yes' ? agreementAccepted : null,
+    agreementAcceptedAt: equipmentRental === 'Yes' ? agreementAcceptedAt : null,
+    agreementVersion: equipmentRental === 'Yes' ? AGREEMENT_VERSION_LABEL : null,
+
+    signature: await getSignatureData(),
+    signatureType: sig.mode,
+    signatureDate: new Date().toISOString()
+  };
+
+  const ENDPOINT = 'REPLACE_WITH_POWER_AUTOMATE_HTTP_ENDPOINT';
+  const isPreview = ENDPOINT.includes('REPLACE_WITH');
+
+  if (isPreview) {
+    console.log('PREVIEW MODE — payload that will be sent once ENDPOINT is set:', payload);
+    document.getElementById('finalCaseId').textContent = referenceId + ' (preview — not actually sent)';
+    document.getElementById('caseIdBadge').textContent = referenceId;
+    goTo('success');
+    return;
+  }
+
+  try {
+    const res = await fetch(ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) throw new Error('Bad response: ' + res.status);
+    const result = await res.json().catch(() => ({}));
+    const finalRef = result.referenceId || referenceId;
+    document.getElementById('finalCaseId').textContent = finalRef;
+    document.getElementById('caseIdBadge').textContent = finalRef;
+    goTo('success');
+  } catch (err) {
+    errorBanner.classList.add('show');
+    btn.disabled = false;
+    btn.textContent = 'Submit Request';
+  }
+}
+
+/* ========= Init ========= */
+beerAddProduct();
+naAddProduct();
+renderStepper('home');
+document.getElementById('agreementVersionLabel').textContent = AGREEMENT_VERSION_LABEL;
+</script>
+</body>
+</html>
