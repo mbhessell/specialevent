@@ -196,6 +196,11 @@
     background: var(--notice-bg); border: 1.5px solid var(--amber); border-radius: 8px;
     padding: 16px 18px; margin-bottom: 24px; font-size: 13.5px; line-height: 1.6; color: var(--ink);
   }
+
+  .mini-callout {
+    background: var(--notice-bg); border-left: 3px solid var(--amber); border-radius: 4px;
+    padding: 8px 12px; margin: 12px 0 0; font-size: 12.5px; line-height: 1.5; color: var(--ink);
+  }
   .disclaimer-box .dl-title {
     font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.05em;
     color: var(--amber-deep); font-weight: 700; margin-bottom: 8px;
@@ -445,6 +450,7 @@
 
     <div id="beerBlocks"></div>
     <button type="button" class="btn-add" onclick="beerAddProduct()">+ Add another product</button>
+    <p class="mini-callout">All returned product is subject to a 5% restocking fee.</p>
     <p class="helper-note" id="beerError" style="display:none; color:var(--danger);">Please fill in a Product and Quantity for each line before continuing.</p>
 
     <div class="btn-row">
@@ -461,6 +467,7 @@
 
     <div id="naBlocks"></div>
     <button type="button" class="btn-add" onclick="naAddProduct()">+ Add another product</button>
+    <p class="mini-callout">All returned product is subject to a 5% restocking fee.</p>
     <p class="helper-note" id="naError" style="display:none; color:var(--danger);">Please fill in a Product and Quantity for each line before continuing.</p>
 
     <div class="btn-row">
@@ -554,7 +561,7 @@
 
     <!-- Turnstile widget mounts here — replace data-sitekey with the real Cloudflare Turnstile site key registered for this page -->
     <div class="field" style="margin-top:22px;">
-      <div class="cf-turnstile" data-sitekey="0x4AAAAAAEdNwikuVc8WhWCj" data-callback="onTurnstileOK"></div>
+      <div class="cf-turnstile" data-sitekey="0x4AAAAAAEdNwikuVc8WhWCj" data-callback="onTurnstileOK" data-expired-callback="onTurnstileExpired" data-error-callback="onTurnstileError"></div>
     </div>
 
     <div class="btn-row">
@@ -615,10 +622,12 @@ let turnstileOK = false;
 
 const EQUIPMENT_CATALOG = [
   { key: 'iceDown',      name: 'Ice Down',      price: 50 },
-  { key: 'smallTrailer', name: 'Small Trailer', price: 150 },
+  { key: 'smallTrailer', name: 'Small Trailer', price: 100 },
   { key: 'largeTrailer', name: 'Large Trailer', price: 250 },
-  { key: 'draftTrailer', name: 'Draft Trailer', price: 200 },
-  { key: 'kegBox',       name: 'Keg Box',       price: 150 }
+  { key: 'draftTrailer', name: 'Draft Trailer', price: 150 },
+  { key: 'kegBox',       name: 'Keg Box',       price: 75 },
+  { key: 'bannerSign',   name: "3'x5' Banner Sign",            price: 20 },
+  { key: 'chloroplastSign', name: "12'x18' Chloroplast Price Sign", price: 10 }
 ];
 
 const FLOW = ['home','event','beer','nonalc','contact','review','success'];
@@ -1354,6 +1363,24 @@ async function getSignatureData() {
 
 /* ========= Turnstile ========= */
 function onTurnstileOK(token) { state.turnstileToken = token; turnstileOK = true; }
+// Turnstile tokens are only valid for a few minutes. This form can easily take
+// longer than that to fill out (event details, equipment, beer/non-alc orders,
+// reading the agreement, signing) — if the token silently expires in the
+// background, the original implementation kept `turnstileOK = true` forever,
+// so a stale token would sail past the client-side check and only get rejected
+// by Cloudflare on the server side, where the only symptom was a generic
+// "Something went wrong" banner. These two callbacks make the widget expiring
+// (or erroring) reset that state, so submitRequest() correctly asks the user
+// to re-verify instead of silently sending a dead token.
+function onTurnstileExpired() {
+  state.turnstileToken = null;
+  turnstileOK = false;
+  if (window.turnstile) { try { turnstile.reset(); } catch (err) { /* ignore */ } }
+}
+function onTurnstileError() {
+  state.turnstileToken = null;
+  turnstileOK = false;
+}
 
 /* ========= Submit ========= */
 async function submitRequest() {
