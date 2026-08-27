@@ -255,9 +255,27 @@
     background: none; border: none; color: var(--muted); font-size: 16px; cursor: pointer; padding: 4px 8px;
   }
   .agreement-scroll { flex: 1; overflow-y: auto; padding: 18px; background: var(--paper); }
-  .agreement-pages canvas.agreement-page {
-    display: block; width: 100%; height: auto; margin: 0 auto 14px; box-shadow: var(--shadow); background: #fff;
+  #agreementPages {
+    background: #fff; box-shadow: var(--shadow); border-radius: 6px; padding: 28px 30px; margin: 0 auto 14px;
+    max-width: 620px; color: var(--ink); font-size: 13.5px; line-height: 1.6;
   }
+  #agreementPages h1 {
+    font-family: 'Libre Franklin', sans-serif; font-size: 17px; text-align: center; text-decoration: underline;
+    margin: 0 0 18px;
+  }
+  #agreementPages p { margin: 0 0 14px; }
+  #agreementPages strong { color: var(--slate); }
+  #agreementPages .merge-field {
+    background: var(--notice-bg); border-bottom: 1.5px solid var(--amber-deep); padding: 0 3px;
+    font-weight: 600; color: var(--amber-deep);
+  }
+  #agreementPages .fee-table {
+    width: 100%; border-collapse: collapse; margin: 0 0 16px; font-size: 13px;
+  }
+  #agreementPages .fee-table th, #agreementPages .fee-table td {
+    border: 1px solid var(--line); padding: 6px 10px; text-align: left;
+  }
+  #agreementPages .fee-table th { background: var(--paper); font-weight: 700; }
   .agreement-loading { text-align: center; color: var(--muted); font-size: 13.5px; padding: 40px 0; }
   .agreement-agree-bar {
     display: none; align-items: center; justify-content: space-between; gap: 14px;
@@ -377,13 +395,23 @@
 
     <div class="field-row">
       <div class="field">
-        <label>Date of Event <span class="req">*</span></label>
-        <input type="date" id="f_eventDate" required>
+        <label>Event Start Date <span class="req">*</span></label>
+        <input type="date" id="f_eventStartDate" required onchange="onEventDatesChange()">
       </div>
       <div class="field">
-        <label>Requested Date of Setup <span class="req">*</span></label>
-        <input type="date" id="f_setupDate" required>
+        <label>Event End Date <span class="req">*</span></label>
+        <input type="date" id="f_eventEndDate" required onchange="onEventDatesChange()">
       </div>
+    </div>
+
+    <div class="field">
+      <label>Requested Date of Setup <span class="req">*</span></label>
+      <input type="date" id="f_setupDate" required>
+    </div>
+
+    <div class="field">
+      <label>Event Address <span class="req">*</span></label>
+      <input type="text" id="f_eventAddress" placeholder="Street address, city, state" required oninput="onEventAddressChange()">
     </div>
 
     <div class="field">
@@ -449,7 +477,7 @@
 
     <div class="field">
       <label>Name of Person Responsible <span class="req">*</span></label>
-      <input type="text" id="f_contactName" placeholder="Full name" required>
+      <input type="text" id="f_contactName" placeholder="Full name" required oninput="invalidateAgreementAcceptance()">
     </div>
 
     <div class="field">
@@ -574,7 +602,6 @@
 <footer>Submissions are reviewed by the Special Events team.</footer>
 
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
 /* ========= State ========= */
 const state = {
@@ -658,13 +685,42 @@ function renderEquipmentBlocks() {
   `).join('');
 }
 function validateEvent() {
-  const required = ['f_eventDate','f_setupDate','f_equipmentRental'];
+  const required = ['f_eventStartDate','f_eventEndDate','f_setupDate','f_eventAddress','f_equipmentRental'];
   for (const id of required) {
     const el = document.getElementById(id);
-    if (!el.value) { el.focus(); el.style.borderColor = 'var(--danger)'; return; }
+    if (!el.value || !el.value.trim()) { el.focus(); el.style.borderColor = 'var(--danger)'; return; }
     el.style.borderColor = '';
   }
+  const startEl = document.getElementById('f_eventStartDate');
+  const endEl = document.getElementById('f_eventEndDate');
+  if (endEl.value < startEl.value) {
+    endEl.focus();
+    endEl.style.borderColor = 'var(--danger)';
+    return;
+  }
   goTo('beer');
+}
+
+/* If the event dates or address change after the agreement has already
+   been accepted, the merged agreement text is no longer what was accepted —
+   clear acceptance so the requestor has to re-review and re-accept. */
+function onEventDatesChange() {
+  invalidateAgreementAcceptance();
+}
+function onEventAddressChange() {
+  invalidateAgreementAcceptance();
+}
+function invalidateAgreementAcceptance() {
+  if (typeof agreementAccepted !== 'undefined' && agreementAccepted) {
+    agreementAccepted = false;
+    agreementAcceptedAt = null;
+    // If the gate/agreement UI is already rendered, re-render it so the
+    // "Agreement accepted" checkmark disappears and the scroll-to-accept
+    // gate reappears, reflecting that a re-review is now required.
+    if (typeof renderAgreementGate === 'function' && document.getElementById('agreementGate') && document.getElementById('agreementGate').style.display !== 'none') {
+      renderAgreementGate();
+    }
+  }
 }
 
 /* ========= Step 2: Beer Order (dynamic add/remove list) =========
@@ -943,8 +999,10 @@ function renderReview() {
 
   const equipRental = val('f_equipmentRental');
   const eventRows = [
-    ['Date of Event', val('f_eventDate'), true],
-    ['Requested Date of Setup', val('f_setupDate'), true],
+    ['Event Start Date', formatDateForDisplay(val('f_eventStartDate')), true],
+    ['Event End Date', formatDateForDisplay(val('f_eventEndDate')), true],
+    ['Requested Date of Setup', formatDateForDisplay(val('f_setupDate')), true],
+    ['Event Address', val('f_eventAddress'), true],
     ['Equipment Rental', equipRental, true],
   ];
   html += section('Event', eventRows, 'event');
@@ -1004,21 +1062,97 @@ function renderReview() {
    agreement step is skipped and the signature is available immediately. */
 let agreementAccepted = false;
 let agreementAcceptedAt = null;
-let agreementPdfDoc = null;
 
 // A stable label identifying which version of the agreement text is currently embedded below.
-// Update this every time RENTAL_AGREEMENT_PDF_BASE64 is swapped for a revised agreement, so the
-// acceptance record (shown on-screen, in the submitted payload, and in the Word packet's
-// AgreementVersion field) always says exactly which terms someone agreed to — even years later
-// after the agreement itself has since changed. Any short, human-readable label works.
-const AGREEMENT_VERSION_LABEL = "PLACEHOLDER — set to the real agreement's version/effective date";
+// Update this whenever buildAgreementHtml()'s wording changes (e.g. a fee-schedule update, a new
+// clause) so the acceptance record (shown on-screen, in the submitted payload, and in the Word
+// packet's AgreementVersion field) always says exactly which terms someone agreed to — even years
+// later after the agreement itself has since changed.
+const AGREEMENT_VERSION_LABEL = "Equipment Lease Agreement — Rev. 2026-08-27";
 
-// PLACEHOLDER — replace with the real, current signed Equipment Rental Agreement PDF,
-// base64-encoded with no "data:" prefix (e.g. `base64 -w0 agreement.pdf` on macOS/Linux,
-// or `certutil -encode` on Windows then strip the header/footer lines). Everything else
-// in this section (modal, scroll-to-bottom detection, Agree button, signature lock) works
-// as soon as this constant is swapped for the real document — nothing else needs to change.
-const RENTAL_AGREEMENT_PDF_BASE64 = "JVBERi0xLjMKJZOMi54gUmVwb3J0TGFiIEdlbmVyYXRlZCBQREYgZG9jdW1lbnQgKG9wZW5zb3VyY2UpCjEgMCBvYmoKPDwKL0YxIDIgMCBSIC9GMiAzIDAgUgo+PgplbmRvYmoKMiAwIG9iago8PAovQmFzZUZvbnQgL0hlbHZldGljYSAvRW5jb2RpbmcgL1dpbkFuc2lFbmNvZGluZyAvTmFtZSAvRjEgL1N1YnR5cGUgL1R5cGUxIC9UeXBlIC9Gb250Cj4+CmVuZG9iagozIDAgb2JqCjw8Ci9CYXNlRm9udCAvSGVsdmV0aWNhLUJvbGQgL0VuY29kaW5nIC9XaW5BbnNpRW5jb2RpbmcgL05hbWUgL0YyIC9TdWJ0eXBlIC9UeXBlMSAvVHlwZSAvRm9udAo+PgplbmRvYmoKNCAwIG9iago8PAovQ29udGVudHMgMTAgMCBSIC9NZWRpYUJveCBbIDAgMCA2MTIgNzkyIF0gL1BhcmVudCA5IDAgUiAvUmVzb3VyY2VzIDw8Ci9Gb250IDEgMCBSIC9Qcm9jU2V0IFsgL1BERiAvVGV4dCAvSW1hZ2VCIC9JbWFnZUMgL0ltYWdlSSBdCj4+IC9Sb3RhdGUgMCAvVHJhbnMgPDwKCj4+IAogIC9UeXBlIC9QYWdlCj4+CmVuZG9iago1IDAgb2JqCjw8Ci9Db250ZW50cyAxMSAwIFIgL01lZGlhQm94IFsgMCAwIDYxMiA3OTIgXSAvUGFyZW50IDkgMCBSIC9SZXNvdXJjZXMgPDwKL0ZvbnQgMSAwIFIgL1Byb2NTZXQgWyAvUERGIC9UZXh0IC9JbWFnZUIgL0ltYWdlQyAvSW1hZ2VJIF0KPj4gL1JvdGF0ZSAwIC9UcmFucyA8PAoKPj4gCiAgL1R5cGUgL1BhZ2UKPj4KZW5kb2JqCjYgMCBvYmoKPDwKL0NvbnRlbnRzIDEyIDAgUiAvTWVkaWFCb3ggWyAwIDAgNjEyIDc5MiBdIC9QYXJlbnQgOSAwIFIgL1Jlc291cmNlcyA8PAovRm9udCAxIDAgUiAvUHJvY1NldCBbIC9QREYgL1RleHQgL0ltYWdlQiAvSW1hZ2VDIC9JbWFnZUkgXQo+PiAvUm90YXRlIDAgL1RyYW5zIDw8Cgo+PiAKICAvVHlwZSAvUGFnZQo+PgplbmRvYmoKNyAwIG9iago8PAovUGFnZU1vZGUgL1VzZU5vbmUgL1BhZ2VzIDkgMCBSIC9UeXBlIC9DYXRhbG9nCj4+CmVuZG9iago4IDAgb2JqCjw8Ci9BdXRob3IgKGFub255bW91cykgL0NyZWF0aW9uRGF0ZSAoRDoyMDI2MDgyNjIxMzUxNCswMCcwMCcpIC9DcmVhdG9yIChhbm9ueW1vdXMpIC9LZXl3b3JkcyAoKSAvTW9kRGF0ZSAoRDoyMDI2MDgyNjIxMzUxNCswMCcwMCcpIC9Qcm9kdWNlciAoUmVwb3J0TGFiIFBERiBMaWJyYXJ5IC0gXChvcGVuc291cmNlXCkpIAogIC9TdWJqZWN0ICh1bnNwZWNpZmllZCkgL1RpdGxlICh1bnRpdGxlZCkgL1RyYXBwZWQgL0ZhbHNlCj4+CmVuZG9iago5IDAgb2JqCjw8Ci9Db3VudCAzIC9LaWRzIFsgNCAwIFIgNSAwIFIgNiAwIFIgXSAvVHlwZSAvUGFnZXMKPj4KZW5kb2JqCjEwIDAgb2JqCjw8Ci9GaWx0ZXIgWyAvQVNDSUk4NURlY29kZSAvRmxhdGVEZWNvZGUgXSAvTGVuZ3RoIDQ5NQo+PgpzdHJlYW0KR2F1YTliPixyLydMX11vTUhMIlQralItImFlSy07OGxVbHUpYFBIKU49cmtBIzBQaWA0OiEmQTZvUzVRKjtfZS5GJCg8RWhgZS0wWlAjNW5FSDklNiFpMFY5YUdaLyowaFkjMjRUSi1EcVBiOVllbGdVNiclbC5mL1RKIl5UM11bRERzKkluNCQzWV4iTEciPVlxOE5jZ3RATiMzNk5oSFxvPEp0JmE8L3JAQz8mJ2ooRiksRkJVS04pRV1CTztlcSZnN1JjJ2BCKj5PUSlOMmNoXUYpIU00MGc2SDMoRVVIPEFkKG0nKD9ENW1mcyFIK0c5aks5VGwnJDg4QmU9KVdjci48YEhvXmM5Tj0kPSRsJFwmbzFNPyhyJiZoaVBwQ2s2NXBAW01gNT5CU2E3am1QXVIlTkEiP1ciLiluYDlRY14uRmloWXQhUC1QT2A2QzVkJ2A2cnMhZzxeMFA9InBZJ0grOEBjZ1I+RHFlMDo3UVMoPUhGSyRgcmxINlhCWFFYbTtTcjwwX15PWG5qLmAhXmtDZ1Q9b1cyT1tacDAwY18uPkQpM1wrMllfaWAxUGooPGhIcnU/XyJXJD9RP1tPP1E7KyQrKjNsN2hmXGRpV1UnMUYnOjdzQUBbSD47X1oqPVA3ZHA/KFdyKX4+ZW5kc3RyZWFtCmVuZG9iagoxMSAwIG9iago8PAovRmlsdGVyIFsgL0FTQ0lJODVEZWNvZGUgL0ZsYXRlRGVjb2RlIF0gL0xlbmd0aCA0OTUKPj4Kc3RyZWFtCkdhdWE5Yj4sci8nTF9db01ITCJUK2pSLSJhZUstOzhsVWx1KWBQSClOPXJrQSMwUGlgNDohJkE2b1M1USo7X2UuRiQoPEVoYGUtMFpQIzVuRUg5JTYhaTBWOWFHWi8qMGhZIzI0VEotRHFQYjlZZWxnVTYnJWwuZi9USiJeVDNdW0REcypJbjQkM1leIkxHIj1ZcThOY2d0QE4jMzZOaEhcbzxKdCZhPC9yQEM/JidqKEYpLEZCVUtOKUVdQU06aHRgZDdSYydgQio+T1EpTjJjaF1GKSFNNDBnNkgzKEVVSDxBZChtJyg/RDVtZnMhSCtHOWpLOVRsJyQ4OEJlPSlXY3IuPGBIb15jOU49JD0kbCRcJm8xTT8ociYmaGlQcENrNjVwQFtNYDU+QlNhN2ptUF1SJU5BIj9XIi4pbmA5UWNeLkZpaFl0IVAtUE9gNkM1ZCdgNnJzIWc8XjBQPSJwWSdIKzhAY2dSPkRxZTA6N1FTKD1IRkskYHJsSDZYQlhRWG07U3I8MF9eT1huai5gIV5rQ2dUPW9XMk9bWnAwMGNfLj5EKTNcKzJZX2lgMVBqKDxoSHJ1P18iVyQ/UT9bTz9ROyskKyozbDdoZlxkaVdVJzFGJzo3c0FAW0g+O19aKj1QN2RnUSJXcjJ+PmVuZHN0cmVhbQplbmRvYmoKMTIgMCBvYmoKPDwKL0ZpbHRlciBbIC9BU0NJSTg1RGVjb2RlIC9GbGF0ZURlY29kZSBdIC9MZW5ndGggNTM3Cj4+CnN0cmVhbQpHYXVhPTpOKV5WKHJsJUMnW08lVD4pTi1Cb1UlT0lTV3BOXmsyUycoRUpRIUgxW006I1wkJU5OQVEibl05Ll9bc1lMMzdGcjl0XCImREUmUFxZdCdgTVgoRUhNKlNObThXXEhUT2pjKmZPJEdJJV5CcFchRmpkYWQ3IT02VjI5cWhbWmItLzdFQjI/SHBgO2o7aj9LOVVePzNqT0FMQ01lPF02SldLYVo2TFRVdUR0V3VYNlxpc09KYVp0M3UwPU5NLkJEPS1DQClTV0NXXy1xTFJqKFo2Q01fSTZpYHBGLDYvbD1faTloV2lUIlJNWyUzLmFDODY5TVF1LztuZltnMW89IlBdcy5dbi00V14pSkklTDdgWjMvQF1QcHVpdV8jIXBnViRHS2YwaUE8a2s/WWhkaEtGOF8rUV5OSE5YSVdrJ3ROQzk8RmwyNk9Rb1ctUFhYO1dvIyZQPzslLVwySl46L2lQSmFdYG4zKV9ZLFNDNWNAKyNtNUxTMWlyakFTJytAPmtlKDxBbVwsUWQuV0NFa3M3TzxOUiElNUI5WTIyVXJXaDg/IjozKCxMNFdRazZaQ2dvMVwmUXNyXj0vRVxePS9GRzUxPms8P0lNRVdWRCVTNF4xP0xqSUVCRT9xTkI/QHFOQ1drZSlxMl43aC1kTDwkVm0pQyQzVVUqMDFLTzUtT1BUQ102UjA+MmVmV1MsZzA+fj5lbmRzdHJlYW0KZW5kb2JqCnhyZWYKMCAxMwowMDAwMDAwMDAwIDY1NTM1IGYgCjAwMDAwMDAwNjEgMDAwMDAgbiAKMDAwMDAwMDEwMiAwMDAwMCBuIAowMDAwMDAwMjA5IDAwMDAwIG4gCjAwMDAwMDAzMjEgMDAwMDAgbiAKMDAwMDAwMDUxNSAwMDAwMCBuIAowMDAwMDAwNzA5IDAwMDAwIG4gCjAwMDAwMDA5MDMgMDAwMDAgbiAKMDAwMDAwMDk3MSAwMDAwMCBuIAowMDAwMDAxMjMyIDAwMDAwIG4gCjAwMDAwMDEzMDMgMDAwMDAgbiAKMDAwMDAwMTg4OSAwMDAwMCBuIAowMDAwMDAyNDc1IDAwMDAwIG4gCnRyYWlsZXIKPDwKL0lEIApbPGE4Nzg2Njg5Yjk0ODU0MTU5YWE1MDM2ZGFjNjQ4ODgyPjxhODc4NjY4OWI5NDg1NDE1OWFhNTAzNmRhYzY0ODg4Mj5dCiUgUmVwb3J0TGFiIGdlbmVyYXRlZCBQREYgZG9jdW1lbnQgLS0gZGlnZXN0IChvcGVuc291cmNlKQoKL0luZm8gOCAwIFIKL1Jvb3QgNyAwIFIKL1NpemUgMTMKPj4Kc3RhcnR4cmVmCjMxMDMKJSVFT0YK"; // PLACEHOLDER PDF — swap for the real agreement (see comment above)
+// The merge fields below mirror the four content controls (LesseeName, LeaseBeginDate,
+// LeaseEndDate, Premises) in the Word template used by Power Automate's "Populate a Microsoft
+// Word Template" action for the signed packet — same source fields, same wording, so what the
+// requestor reviews and agrees to here on screen matches what gets generated for the file.
+// Builds a live, merged HTML rendering of the Equipment Lease Agreement so the text the requestor
+// reviews always reflects their own entered dates/name/address — no static PDF to keep in sync.
+function buildAgreementHtml() {
+  const lesseeName = val('f_contactName').trim() || '________________________';
+  const beginDate = formatDateForDisplay(val('f_eventStartDate')) || '________________________';
+  const endDate = formatDateForDisplay(val('f_eventEndDate')) || '________________________';
+  const premises = val('f_eventAddress').trim() || '________________________';
+  const mf = (text) => `<span class="merge-field">${escapeHtml(text)}</span>`;
+
+  return `
+    <h1>Equipment Lease Agreement</h1>
+    <p>This Equipment Lease Agreement ("Lease") is made and entered into on this day by and
+    between ${mf(lesseeName)} ("Lessee") and F.E.B. Distributing Co., Inc./Capital City
+    Beverages Inc. ("Lessor") for the temporary use of certain equipment owned by the Lessor
+    in accordance with Mississippi Department of Revenue Letter Ruling No. 14-0065; July 23,
+    2014.</p>
+
+    <p><strong>1. EQUIPMENT CHARGES.</strong> Lessor hereby leases to Lessee the equipment
+    identified hereinbelow for said equipment's fair market rental value, as stated herein,
+    plus 7.0% sales tax, as required by the state of Mississippi. All charges are to be paid
+    immediately upon receipt of the equipment.</p>
+
+    <table class="fee-table">
+      <thead><tr><th>Description</th><th>Rental Fee</th></tr></thead>
+      <tbody>
+        <tr><td>Event Trailer</td><td>$250.00</td></tr>
+        <tr><td>Draft Caddy Large</td><td>$200.00</td></tr>
+        <tr><td>Draft Caddy Small</td><td>$100.00</td></tr>
+        <tr><td>Keg Box</td><td>$150.00</td></tr>
+        <tr><td>Ice Down</td><td>$50.00</td></tr>
+        <tr><td>Bar</td><td>$20.00</td></tr>
+        <tr><td>Hand Pump</td><td>$20.00</td></tr>
+        <tr><td>5% Restocking Fee</td><td>&nbsp;</td></tr>
+        <tr><td>CO2 Tank – per 1 tank</td><td>$25.00</td></tr>
+      </tbody>
+    </table>
+
+    <p><strong>2. TERM.</strong> This Lease will start on ${mf(beginDate)} (begin date) and will
+    end on ${mf(endDate)} (end date). Lessee shall be entitled to possession of the equipment
+    on the first day of the lease term, and shall surrender the equipment to Lessor at the
+    expiration thereof by delivering the Equipment to Lessor or Lessor's agent in good
+    condition and working order, ordinary wear and tear excepted, as it was at the
+    commencement of the Agreement.</p>
+
+    <p><strong>3. USE OF EQUIPMENT.</strong> Lessee shall only use the equipment at the
+    following premises: ${mf(premises)}, in a careful and proper manner and will comply with
+    all laws, rules, ordinances, statutes and orders regarding the use, maintenance of
+    storage of the Equipment. By executing this Lease, the Lessee acknowledges that it is the
+    holder of a valid Mississippi Beer Permit.</p>
+
+    <p><strong>4. CONDITION OF EQUIPMENT AND REPAIR.</strong> Lessee or Lessee's agent has
+    inspected the Equipment and acknowledges that the Equipment is in good and acceptable
+    condition, and agrees to return the Equipment to Lessor at the termination of this Lease
+    in the same condition as received.</p>
+
+    <p><strong>5. MAINTENANCE, DAMAGE AND LOSS.</strong> Lessee will, at Lessee's sole expense,
+    keep and maintain the equipment clean and in good working order and repair during the
+    Lease Term. Lessee shall be responsible for paying for any damage to the equipment while
+    in Lessee's possession. In the event the Equipment is lost or damaged beyond repair,
+    Lessee shall pay to Lessor the replacement cost of the Equipment.</p>
+
+    <p><strong>6. ENCUMBRANCES.</strong> Lessee shall keep the Equipment free and clear of any
+    liens or other encumbrances, and shall not permit any act where Lessor's title or rights
+    may be negatively affected.</p>
+
+    <p><strong>7. OWNERSHIP.</strong> The equipment is and shall remain the exclusive property
+    of Lessor, and Lessee shall have no right to assign, transfer or sublease its
+    use/possession of the equipment or this Agreement to any other party without the prior
+    written consent of Lessor.</p>
+
+    <p><strong>8. EXPENSES.</strong> Lessee shall pay Lessor all costs and expenses, including
+    reasonable attorney's fees, incurred by Lessor in exercising any of the terms of this
+    Lease.</p>
+
+    <p><strong>9. ENTIRE AGREEMENT.</strong> This instrument constitutes the entire agreement
+    between the undersigned parties, and shall not be altered, changed or amended except by a
+    signed written agreement between said parties.</p>
+  `;
+}
 
 function renderAgreementGate(equipmentRentalRequested) {
   const gate = document.getElementById('agreementGate');
@@ -1064,7 +1198,20 @@ function formatTimestamp(iso) {
   }
 }
 
-async function openAgreementModal() {
+// Formats a <input type="date"> value ("YYYY-MM-DD") as a human-readable date without any
+// timezone shift (parsing "YYYY-MM-DD" with `new Date()` treats it as UTC midnight, which can
+// display as the previous day in western timezones — so this parses the parts directly instead).
+function formatDateForDisplay(dateStr) {
+  if (!dateStr) return '';
+  const parts = String(dateStr).split('-');
+  if (parts.length !== 3) return dateStr;
+  const [y, m, d] = parts.map(n => parseInt(n, 10));
+  if (!y || !m || !d) return dateStr;
+  const dt = new Date(y, m - 1, d);
+  return dt.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+}
+
+function openAgreementModal() {
   document.getElementById('agreementModal').classList.add('open');
   document.body.style.overflow = 'hidden';
 
@@ -1074,35 +1221,17 @@ async function openAgreementModal() {
     scrollEl.dataset.wired = '1';
   }
 
-  if (!agreementPdfDoc) {
-    try {
-      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-      const bytes = Uint8Array.from(atob(RENTAL_AGREEMENT_PDF_BASE64), ch => ch.charCodeAt(0));
-      agreementPdfDoc = await pdfjsLib.getDocument({ data: bytes }).promise;
-      await renderAgreementPages();
-      document.getElementById('agreementLoading').style.display = 'none';
-    } catch (err) {
-      document.getElementById('agreementLoading').textContent = 'Could not load the agreement. Please contact the Special Events team.';
-    }
+  // Re-render every time the modal opens (not just once) so a name/date/address edited after a
+  // prior view — but before re-opening — shows up merged into the text immediately.
+  try {
+    document.getElementById('agreementPages').innerHTML = buildAgreementHtml();
+    document.getElementById('agreementLoading').style.display = 'none';
+  } catch (err) {
+    document.getElementById('agreementLoading').textContent = 'Could not load the agreement. Please contact the Special Events team.';
   }
   // Re-check in case the document is short enough to already be "at the bottom",
   // or the modal was reopened after already being accepted.
   setTimeout(checkAgreementScroll, 50);
-}
-
-async function renderAgreementPages() {
-  const container = document.getElementById('agreementPages');
-  container.innerHTML = '';
-  for (let i = 1; i <= agreementPdfDoc.numPages; i++) {
-    const page = await agreementPdfDoc.getPage(i);
-    const viewport = page.getViewport({ scale: 1.4 });
-    const canvas = document.createElement('canvas');
-    canvas.className = 'agreement-page';
-    canvas.width = viewport.width;
-    canvas.height = viewport.height;
-    container.appendChild(canvas);
-    await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-  }
 }
 
 function checkAgreementScroll() {
@@ -1270,7 +1399,9 @@ async function submitRequest() {
     referenceId,
     dateSubmitted: new Date().toISOString(),
 
-    eventDate: val('f_eventDate'),
+    eventStartDate: val('f_eventStartDate'),
+    eventEndDate: val('f_eventEndDate'),
+    eventAddress: val('f_eventAddress'),
     setupDate: val('f_setupDate'),
     equipmentRental,
     equipmentItems: equipmentRental === 'Yes'
@@ -1305,7 +1436,7 @@ async function submitRequest() {
     signatureDate: new Date().toISOString()
   };
 
-  const ENDPOINT = 'REPLACE_WITH_POWER_AUTOMATE_HTTP_ENDPOINT';
+  const ENDPOINT = 'https://default0c07cc35444246a2a2b1a250d653b9.2f.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/13/workflows/dd6ce32234c74d70aa0035c62b6190cd/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=LVCLrbCJ9eNrd0Z9zoRJt_ZBXeSEnYJytDAipCt5IoA';
   const isPreview = ENDPOINT.includes('REPLACE_WITH');
 
   if (isPreview) {
