@@ -1443,16 +1443,17 @@ async function submitRequest() {
 
     beerOrder: state.beer.map(id => {
       const p = `beer${id}`;
+      // Schema expects string quantities (from original form input values)
       return {
         product: val(`${p}_product`),
-        quantity: parseInt(val(`${p}_quantity`), 10) || 0
+        quantity: String(val(`${p}_quantity`) || '')
       };
     }),
     nonAlcoholicOrder: state.na.map(id => {
       const p = `na${id}`;
       return {
         product: val(`${p}_product`),
-        quantity: parseInt(val(`${p}_quantity`), 10) || 0
+        quantity: String(val(`${p}_quantity`) || '')
       };
     }),
 
