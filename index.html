@@ -726,10 +726,8 @@ function invalidateAgreementAcceptance() {
     // If the gate/agreement UI is already rendered, re-render it so the
     // "Agreement accepted" checkmark disappears and the scroll-to-accept
     // gate reappears, reflecting that a re-review is now required.
-    // Always pass the current equipment-rental value so the gate is shown
-    // or hidden correctly (calling with no argument treated the path as "No").
-    if (typeof renderAgreementGate === 'function' && document.getElementById('agreementGate')) {
-      renderAgreementGate(val('f_equipmentRental') === 'Yes');
+    if (typeof renderAgreementGate === 'function' && document.getElementById('agreementGate') && document.getElementById('agreementGate').style.display !== 'none') {
+      renderAgreementGate();
     }
   }
 }
@@ -1443,18 +1441,11 @@ async function submitRequest() {
 
     beerOrder: state.beer.map(id => {
       const p = `beer${id}`;
-      // Schema expects string quantities (from original form input values)
-      return {
-        product: val(`${p}_product`),
-        quantity: String(val(`${p}_quantity`) || '')
-      };
+      return { product: val(`${p}_product`), quantity: val(`${p}_quantity`) };
     }),
     nonAlcoholicOrder: state.na.map(id => {
       const p = `na${id}`;
-      return {
-        product: val(`${p}_product`),
-        quantity: String(val(`${p}_quantity`) || '')
-      };
+      return { product: val(`${p}_product`), quantity: val(`${p}_quantity`) };
     }),
 
     contactName: val('f_contactName'),
@@ -1463,10 +1454,9 @@ async function submitRequest() {
     contactPhone: val('f_contactPhone'),
 
     equipmentDisclaimerShown: equipmentRental === 'Yes',
-    // Avoid nulls — many HTTP trigger schemas reject null for boolean/string fields
-    agreementAccepted: equipmentRental === 'Yes' ? agreementAccepted : false,
-    agreementAcceptedAt: equipmentRental === 'Yes' ? (agreementAcceptedAt || '') : '',
-    agreementVersion: equipmentRental === 'Yes' ? AGREEMENT_VERSION_LABEL : '',
+    agreementAccepted: equipmentRental === 'Yes' ? agreementAccepted : null,
+    agreementAcceptedAt: equipmentRental === 'Yes' ? agreementAcceptedAt : null,
+    agreementVersion: equipmentRental === 'Yes' ? AGREEMENT_VERSION_LABEL : null,
 
     signature: await getSignatureData(),
     signatureType: sig.mode,
