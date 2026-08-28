@@ -726,8 +726,10 @@ function invalidateAgreementAcceptance() {
     // If the gate/agreement UI is already rendered, re-render it so the
     // "Agreement accepted" checkmark disappears and the scroll-to-accept
     // gate reappears, reflecting that a re-review is now required.
-    if (typeof renderAgreementGate === 'function' && document.getElementById('agreementGate') && document.getElementById('agreementGate').style.display !== 'none') {
-      renderAgreementGate();
+    // Always pass the current equipment-rental value so the gate is shown
+    // or hidden correctly (calling with no argument treated the path as "No").
+    if (typeof renderAgreementGate === 'function' && document.getElementById('agreementGate')) {
+      renderAgreementGate(val('f_equipmentRental') === 'Yes');
     }
   }
 }
