@@ -446,7 +446,7 @@
   <section class="screen" data-screen="beer">
     <p class="eyebrow">Step 2</p>
     <h2 class="screen-title">Beer Order</h2>
-    <p class="screen-desc">Add every beer product needed for this event. You can add as many as you need.</p>
+    <p class="screen-desc">Add every beer product needed for this event. You can add as many as you need. This section is optional — leave it blank if this event doesn't need any beer.</p>
 
     <div id="beerBlocks"></div>
     <button type="button" class="btn-add" onclick="beerAddProduct()">+ Add another product</button>
@@ -464,7 +464,7 @@
   <section class="screen" data-screen="nonalc">
     <p class="eyebrow">Step 3</p>
     <h2 class="screen-title">Non-Alcoholic Order</h2>
-    <p class="screen-desc">Add every non-alcoholic product needed for this event. You can add as many as you need.</p>
+    <p class="screen-desc">Add every non-alcoholic product needed for this event. You can add as many as you need. This section is optional — leave it blank if this event doesn't need any non-alcoholic product.</p>
 
     <div id="naBlocks"></div>
     <button type="button" class="btn-add" onclick="naAddProduct()">+ Add another product</button>
@@ -774,10 +774,17 @@ function renumberBeer() {
   });
 }
 function validateBeer() {
+  // Beer Order is optional as a whole (some events only need equipment, no product) —
+  // a line left completely blank is fine and is dropped from the submission later.
+  // A line the requestor started filling in still has to be completed, so a Product
+  // with no Quantity (or vice versa) is still caught here.
   const errEl = document.getElementById('beerError');
   for (const id of state.beer) {
     const prefix = `beer${id}`;
-    if (!val(`${prefix}_product`) || !val(`${prefix}_quantity`)) {
+    const product = val(`${prefix}_product`);
+    const quantity = val(`${prefix}_quantity`);
+    if (!product && !quantity) continue; // untouched line — skip
+    if (!product || !quantity) {
       errEl.style.display = 'block';
       document.getElementById(`${prefix}_product`).scrollIntoView({behavior:'smooth', block:'center'});
       return;
@@ -826,10 +833,16 @@ function renumberNa() {
   });
 }
 function validateNa() {
+  // Non-Alcoholic Order is optional as a whole, same as Beer Order above — a line left
+  // completely blank is fine and is dropped from the submission later. A line the
+  // requestor started filling in still has to be completed.
   const errEl = document.getElementById('naError');
   for (const id of state.na) {
     const prefix = `na${id}`;
-    if (!val(`${prefix}_product`) || !val(`${prefix}_quantity`)) {
+    const product = val(`${prefix}_product`);
+    const quantity = val(`${prefix}_quantity`);
+    if (!product && !quantity) continue; // untouched line — skip
+    if (!product || !quantity) {
       errEl.style.display = 'block';
       document.getElementById(`${prefix}_product`).scrollIntoView({behavior:'smooth', block:'center'});
       return;
@@ -1034,24 +1047,34 @@ function renderReview() {
   }
 
   let beerHtml = `<div class="rv-section"><h4>Beer Order <button class="rv-edit" style="float:right;" onclick="goTo('beer')">Edit</button></h4>`;
-  state.beer.forEach((id, i) => {
-    const p = `beer${id}`;
-    beerHtml += `<div class="rv-product">
-      <div class="rv-row"><span class="k">Product ${i+1}</span><span class="v">${val(`${p}_product`) || '—'}</span></div>
-      <div class="rv-row"><span class="k">Quantity</span><span class="v">${val(`${p}_quantity`) || '—'}</span></div>
-    </div>`;
-  });
+  const beerLines = state.beer.filter(id => val(`beer${id}_product`) && val(`beer${id}_quantity`));
+  if (beerLines.length === 0) {
+    beerHtml += `<div class="rv-row"><span class="k">Items</span><span class="v">None — no beer ordered</span></div>`;
+  } else {
+    beerLines.forEach((id, i) => {
+      const p = `beer${id}`;
+      beerHtml += `<div class="rv-product">
+        <div class="rv-row"><span class="k">Product ${i+1}</span><span class="v">${val(`${p}_product`)}</span></div>
+        <div class="rv-row"><span class="k">Quantity</span><span class="v">${val(`${p}_quantity`)}</span></div>
+      </div>`;
+    });
+  }
   beerHtml += `</div>`;
   html += beerHtml;
 
   let naHtml = `<div class="rv-section"><h4>Non-Alcoholic Order <button class="rv-edit" style="float:right;" onclick="goTo('nonalc')">Edit</button></h4>`;
-  state.na.forEach((id, i) => {
-    const p = `na${id}`;
-    naHtml += `<div class="rv-product">
-      <div class="rv-row"><span class="k">Product ${i+1}</span><span class="v">${val(`${p}_product`) || '—'}</span></div>
-      <div class="rv-row"><span class="k">Quantity</span><span class="v">${val(`${p}_quantity`) || '—'}</span></div>
-    </div>`;
-  });
+  const naLines = state.na.filter(id => val(`na${id}_product`) && val(`na${id}_quantity`));
+  if (naLines.length === 0) {
+    naHtml += `<div class="rv-row"><span class="k">Items</span><span class="v">None — no non-alcoholic product ordered</span></div>`;
+  } else {
+    naLines.forEach((id, i) => {
+      const p = `na${id}`;
+      naHtml += `<div class="rv-product">
+        <div class="rv-row"><span class="k">Product ${i+1}</span><span class="v">${val(`${p}_product`)}</span></div>
+        <div class="rv-row"><span class="k">Quantity</span><span class="v">${val(`${p}_quantity`)}</span></div>
+      </div>`;
+    });
+  }
   naHtml += `</div>`;
   html += naHtml;
 
@@ -1440,14 +1463,16 @@ async function submitRequest() {
         })).filter(i => i.quantity > 0)
       : [],
 
+    // Beer/Non-Alcoholic Order are optional sections — blank lines (no product or
+    // quantity entered) are dropped here rather than sent as empty line items.
     beerOrder: state.beer.map(id => {
       const p = `beer${id}`;
       return { product: val(`${p}_product`), quantity: val(`${p}_quantity`) };
-    }),
+    }).filter(x => x.product && x.quantity),
     nonAlcoholicOrder: state.na.map(id => {
       const p = `na${id}`;
       return { product: val(`${p}_product`), quantity: val(`${p}_quantity`) };
-    }),
+    }).filter(x => x.product && x.quantity),
 
     contactName: val('f_contactName'),
     contactAddress: val('f_contactAddress'),
